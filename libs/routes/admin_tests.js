@@ -62,100 +62,23 @@ router.get('/:id',  function(req, res) {
 //router.post('/', passport.authenticate('bearer', { session: false }), function(req, res) {
 router.post('/', function(req, res) {
 	//console.log('---------------------------tests post called');
-		
-	
+			
 	var attributes = req.body.data;
 	
 	//console.log('attributes  ' + attributes);
 	//console.log(util.inspect(req.body.data, {showHidden: false, depth: null}));
 	
-	var rawQuestions =  attributes['questions'];
-	var statQuestions = [];
+	createNewTest(attributes, function(err){
+		if(!err){
+			res.statusCode = 200;
+			res.end();	
+		} else {
+			res.statusCode = 500;
+			res.end();
+			log.error('Internal error(%d): %s', res.statusCode, err.message);						
+		}	
+	});
 	
-	var newTest = new Test({ 
-		"isAvailable": true,
-		"availabilityText": '',
-		"testName": attributes['testName'],
-		"isPublic": attributes['isPublic'],
-		"startDate": attributes['startDate'],
-		"endDate": attributes['endDate'],
-		"questions": []
-    });
-	console.log("rawQuestions ---------", rawQuestions);
-	async.forEachOf(rawQuestions,
-		function(item, index, callback){
-			console.log("item ---------", item);
-			
-			var questionData = {
-				"textDescription":item['textDescription'] || '',
-				"type": item['type'] || 'radio',
-				//"imgUrl": { type: String },
-				"imgId": item['imgId'] || '',
-				"answersAreImages": item['answersAreImages'] || false,
-				"imageIncluded": item['imageIncluded'] || false,
-				"textAnswer": item['textAnswer'] || '',
-				"allAnswers": item['allAnswers']
-			}
-			
-			parseQuestionForImgUrl(questionData, function(newData){
-					
-				parseAnswersForImgUrl(newData, function(finData){
-						
-						
-					var newQuestion = new Question(finData);
-					newQuestion.save(function (err,savedQuestion){
-						newTest.questions.push(savedQuestion.id);
-						statQuestions.push({
-							"id": 'q_'+index,
-							"name": index	
-						});
-						callback();
-					});	
-				});	
-				
-			});	
-		},
-		function(err){
-			console.log('end');
-			newTest.save(function (err,savedTest) {
-				if (!err) {	
-					if(savedTest){
-						createStatistics(savedTest);	
-					}
-					res.statusCode = 200;
-					res.end();
-					//return res.json(outData.routesToJsonV_1(savedTest));					
-				} else {
-					if(err.name === 'ValidationError') {////////////delete   !!!!!
-						res.statusCode = 400;
-						res.end();
-					} else {
-						res.statusCode = 500;
-						res.end();
-					}
-					log.error('Internal error(%d): %s', res.statusCode, err.message);
-				}
-			});
-		}
-	);	
-	
-	function createStatistics(savedTest){
-
-		var newStatistics = new Statistics({
-			"testId": savedTest.id,		
-			"testName": savedTest.testName,	
-			"userAnswers": [],
-			"questions": statQuestions			
-		});
-		
-		newStatistics.save(function (err,savedStats) {
-			if (!err) {	
-								
-			} else {
-				log.error('Internal error(%d): %s', res.statusCode, err.message);
-			}
-		});
-	};	
 });
 
 
@@ -165,12 +88,12 @@ router.post('/:id', function(req, res) {
 
 	var attributes = req.body.data;
 	
-	var oldImgIds = []; // save old img IDs to delete
-	var newImgIds = []; // new img IDs
+	//var oldImgIds = []; // save old img IDs to delete
+	//var newImgIds = []; // new img IDs
 	
-	console.log("newQuestionIds.------------", newImgIds);
+	//console.log("newQuestionIds.------------", newImgIds);
 	
-	if(attributes.questions){
+	/*if(attributes.questions){
 		attributes.questions.forEach(function(item){
 			if(item.imageIncluded && item.imgId){
 				newImgIds.push(item.imgId);
@@ -184,9 +107,31 @@ router.post('/:id', function(req, res) {
 				});
 			}
 		});
-	}
-	console.log("newQuestionIds.-----------2-", newImgIds);
-
+	}*/
+	//console.log("newQuestionIds.-----------2-", newImgIds);
+	
+	clearOldtestData(req.params.id, function(err, testForUpdate){
+			console.log('--------------------------clearOldtestData end');
+		if(!err){		
+			updateTest(testForUpdate, attributes, function(err){
+				console.log('--------------------------updateTest end');
+				if(!err){
+					res.statusCode = 200;
+					res.end();	
+				} else {
+					res.statusCode = 500;
+					res.end();
+					log.error('Internal error(%d): %s', res.statusCode, err.message);						
+				}	
+			});		
+		} else {
+			res.statusCode = 500;
+			res.end();
+			log.error('Internal error(%d): %s', res.statusCode, err.message);		
+		}
+	});
+	
+	/*
 	Test.findById(req.params.id, function (err, oneTest) {	
 		if(!oneTest) {			
 			//somemethodtocreatenewtest();
@@ -219,9 +164,9 @@ router.post('/:id', function(req, res) {
 			res.end();
 			log.error('Internal error(%d): %s',res.statusCode,err.message);
 		}
-	});
+	});*/
 
-
+	/*
 	function updateTest(oneTest){
 		oneTest.isAvailable = true;
 		oneTest.availabilityText = '',
@@ -238,9 +183,9 @@ router.post('/:id', function(req, res) {
 				oneTest.questions = newQuestionIds;
 				oneTest.save(function (err,savedTest) {
 					if (!err) {	
-						/*if(savedTest){
-							createStatistics(savedTest);	
-						}*/
+						//if(savedTest){
+						//	createStatistics(savedTest);	
+						//}
 						res.statusCode = 200;
 						res.end();	
 						
@@ -263,7 +208,7 @@ router.post('/:id', function(req, res) {
 				log.error('Internal error(%d): %s',res.statusCode,err.message);	
 			}
 		});
-	};	
+	};	*/
 	
 	function createStatistics(savedTest){
 
@@ -285,13 +230,246 @@ router.post('/:id', function(req, res) {
 });
 
 
+function createNewTest(attributes, cback){
+	var rawQuestions =  attributes['questions'];
+	
+	
+	var newTest = new Test({ 
+		"isAvailable": true,
+		"availabilityText": '',
+		"testName": attributes['testName'],
+		"isPublic": attributes['isPublic'],
+		"startDate": attributes['startDate'],
+		"endDate": attributes['endDate'],
+		"questions": []
+    });
+	
+	saveTestToDb(newTest, rawQuestions, function(err){
+		if (typeof(cback) == "function"){
+			return cback(err);	
+		}	
+	});
+	
+	/*
+	newTest.save(function (err,savedTest) {
+		if (!err) {	
+			async.forEachOf(rawQuestions,
+				function(item, index, callback){
+					
+					var questionData = {
+						"textDescription":item['textDescription'] || '',
+						"type": item['type'] || 'radio',
+						//"imgUrl": { type: String },
+						"imgId": item['imgId'] || '',
+						"answersAreImages": item['answersAreImages'] || false,
+						"imageIncluded": item['imageIncluded'] || false,
+						"textAnswer": item['textAnswer'] || '',
+						"allAnswers": item['allAnswers']
+					}
+					
+					parseQuestionForImgUrl(questionData, savedTest.id, function(newData){
+						
+						parseAnswersForImgUrl(newData,  savedTest.id, function(finData){
+							
+							var newQuestion = new Question(finData);
+							newQuestion.save(function (err,savedQuestion){
+								statQuestions.push({
+									"id": 'q_'+index,
+									"name": index	
+								});							
+								addQuestionIdToTest(savedTest.id, savedQuestion.id, function(err){
+									if(!err){
+										callback();	
+									} else {
+										log.error('Internal error(%d): %s',res.statusCode,err.message);										
+										if (typeof(cback) == "function"){
+											return cback(err);	
+										}	
+									}
+								});												
+							});	
+						});	
+						
+					});	
+				},
+				function(err){
+					if(!err){
+						createStatistics(savedTest, statQuestions);
+					}
+					if (typeof(cback) == "function"){
+						return cback(err);	
+					}				
+				}
+			);	
+		} else {
+			log.error('Internal error(%d): %s', res.statusCode, err.message);	
+			if (typeof(cback) == "function"){
+				return cback(err);	
+			}	
+		}
+	});	*/
+};
+
+function saveTestToDb(newTest, rawQuestions, cback){
+	var statQuestions = [];
+	newTest.save(function (err,savedTest) {
+		if (!err) {	
+			async.forEachOf(rawQuestions,
+			function(item, index, callback){
+				
+				var questionData = {
+					"textDescription":item['textDescription'] || '',
+					"type": item['type'] || 'radio',
+					//"imgUrl": { type: String },
+					"imgId": item['imgId'] || '',
+					"answersAreImages": item['answersAreImages'] || false,
+					"imageIncluded": item['imageIncluded'] || false,
+					"textAnswer": item['textAnswer'] || '',
+					"allAnswers": item['allAnswers']
+				}
+				
+				parseQuestionForImgUrl(questionData, savedTest.id, function(newData){
+					
+					parseAnswersForImgUrl(newData,  savedTest.id, function(finData){
+						
+						var newQuestion = new Question(finData);
+						newQuestion.save(function (err,savedQuestion){
+							statQuestions.push({
+								"id": 'q_'+index,
+								"name": index	
+							});							
+							addQuestionIdToTest(savedTest.id, savedQuestion.id, function(err){
+								//if(!err){
+									callback(err);	
+								/*} else {
+									log.error('Internal error(%d): %s',res.statusCode,err.message);										
+									if (typeof(cback) == "function"){
+										return cback(err);	
+									}	
+								}*/
+							});												
+						});	
+					});	
+					
+				});	
+			},
+			function(err){
+				if(!err){
+					createStatistics(savedTest, statQuestions);
+				}
+				if (typeof(cback) == "function"){
+					return cback(err);	
+				}				
+			}
+			);	
+		} else {
+			log.error('Internal error(%d): %s', res.statusCode, err.message);	
+			if (typeof(cback) == "function"){
+				return cback(err);	
+			}	
+		}
+	});		
+};
+
+function clearOldtestData(testId, cback){
+	Test.findById(testId, function (err, oneTest) {	
+		if(!oneTest) {	
+			if (typeof(cback) == "function"){
+				return cback('tesi not found by id: ', testId);	
+			}	
+		} else if (!err) {	
+			oneTest.isAvailable = true;
+			oneTest.availabilityText = '';
+			oneTest.testName = '';
+			oneTest.isPublic = true;
+			oneTest.startDate = '';
+			oneTest.endDate = '';
+		
+			console.log('--------------------------async.forEachOf oneTest.questions start');
+			async.forEachOf(oneTest.questions,
+				function(item, index, callback){
+					console.log('--------------------------async.forEachOf oneTest.questions start --', index);
+					deleteQuestion(testId, item, function(err, oldImgIdsInQuestion){
+						callback(err);										
+					});			
+				},
+				function(err){
+					if (typeof(cback) == "function"){
+						oneTest.questions = [];
+						return cback(err, oneTest);	
+					}
+				}
+			);	
+		} else {
+			if (typeof(cback) == "function"){
+				return cback(err);	
+			}
+		}
+	});	
+};
+
+function updateTest(oneTest, attributes, cback){
+		console.log('--------------------------updateTest start');
+	var rawQuestions =  attributes['questions'];
+	var statQuestions = [];
+	
+	oneTest.isAvailable = true;
+	oneTest.availabilityText = '',
+	oneTest.testName = attributes['testName'],
+	oneTest.isPublic = attributes['isPublic'],
+	oneTest.startDate = attributes['startDate'],
+	oneTest.endDate = attributes['endDate'],
+	oneTest.questions = []
+	
+	saveTestToDb(oneTest, rawQuestions, function(err){
+		if (typeof(cback) == "function"){
+			return cback(err);	
+		}	
+	});
+};	
+
+function createStatistics(savedTest, statQuestions){
+
+	var newStatistics = new Statistics({
+		"testId": savedTest.id,		
+		"testName": savedTest.testName,	
+		"userAnswers": [],
+		"questions": statQuestions			
+	});
+	
+	newStatistics.save(function (err,savedStats) {
+		if (!err) {	
+							
+		} else {
+			log.error('Internal error(%d): %s', res.statusCode, err.message);
+		}
+	});
+};	
+
+function addQuestionIdToTest(testId, questionId, callback){
+	Test.findById(testId, function (err, oneTest) {								
+		if(!oneTest) {
+			if (typeof(callback) == "function"){
+				return callback('test not found by id:' + testId);	
+			}		
+		} else if (!err) {
+			oneTest.questions.push(questionId);
+			oneTest.save(function (err,savedTest) {
+				callback(err);
+			});										
+		} else {
+			log.error('Internal error(%d): %s',res.statusCode,err.message);
+			callback(err);
+		}
+	});	
+}
 
 
 
-function parseQuestionForImgUrl(questionData, callback){
+function parseQuestionForImgUrl(questionData, testId, callback){
 	if(questionData.imageIncluded && questionData.imgId){
-		console.log('_-_-_-_-',questionData.imageInclude, questionData.imgId);
-		imgIdToUrl(questionData.imgId, function(url,err){
+		console.log('_-_-_-testId_-', testId);
+		imgIdToUrl(questionData.imgId, testId, function(url,err){
 			if(!err && url){
 				questionData.imgUrl = url;
 			}
@@ -302,12 +480,11 @@ function parseQuestionForImgUrl(questionData, callback){
 	}
 }
 
-function parseAnswersForImgUrl(questionData, cback){
+function parseAnswersForImgUrl(questionData, testId, cback){
 	if(questionData.answersAreImages && questionData.allAnswers.length){
-		console.log('_-_-_-2-',questionData.answersAreImages, questionData.allAnswers.length);
 		async.forEachOf(questionData.allAnswers,
 			function(item, index, callback){				
-				imgIdToUrl(item.imgId, function(url,err){
+				imgIdToUrl(item.imgId, testId, function(url,err){
 					if(!err && url){						
 						item.imgUrl = url;
 					}
@@ -323,18 +500,31 @@ function parseAnswersForImgUrl(questionData, cback){
 	}
 }
 
-function imgIdToUrl(imgId, callback){	
+function imgIdToUrl(imgId, testId, callback){	
 	TestImage.findById(imgId, function (err, oneTestImage) {
 		if(!oneTestImage) {
 			log.error('image not found by id:-- ', imgId);
-			return callback();			
-		} else if (!err) {
 			if (typeof(callback) == "function"){
-				return callback(oneTestImage.url, err);	
+				return callback();			
 			}
+		} else if (!err) {
+			if(testId){
+				oneTestImage.testIds.push(testId);
+				oneTestImage.save(function (err2,savedImg) {
+					if (!err2) {	
+						if (typeof(callback) == "function"){
+							return callback(oneTestImage.url, err);	
+						}
+					} else {
+						log.error('Internal error(%d): %s', res.statusCode, err.message);
+					}
+				});
+			}			
 		} else {			
 			log.error('Internal error(%d): %s',res.statusCode,err.message);
-			return callback(err);	
+			if (typeof(callback) == "function"){
+				return callback(err);	
+			}		
 		}
 	});
 };
@@ -408,49 +598,58 @@ function deleteImgIdsFromDb(idsToDelete){
 	}	
 };
 
-function deleteQuestion(questionToDelId, callback){
-	var oldImgIds = [];
-	if(questionToDelId){
-		//oldImgIds.push(questionToDelId);	
-	} 
-	console.log("oneQuestion.---------------------------+1--", questionToDelId);
+function deleteQuestion(testId, questionToDelId, callback){
+	console.log("-+++++++++++++++++++++++deleteQuestion");
 	Question.findById(questionToDelId, function (err, oneQuestion) {
 		if(!oneQuestion) {
-			console.log("oneQuestion.---------------------------0--", oneQuestion);
-			log.error('Question not found: ', questionToDelId)
+			//log.error('Question not found: ', questionToDelId);
+			callback('Question not found: ', questionToDelId);
 		} else if (!err) {
-				console.log("oneQuestion.---------------------------1--", oneQuestion);
+			console.log("-+++++++++++++++++++++++deleteQuestion 2");
 			if(oneQuestion.allAnswers.length){
-				console.log("oneQuestion.--------------------------2---", oneQuestion);
 				oneQuestion.allAnswers.forEach(function(item){
-						console.log("oneQuestion.---------------------3--------", item);
 					if(item.imgId){
-						oldImgIds.push(item.imgId);	
+						removeTestIdFromImage(item.imgId, testId);
 					}
 				});
 			} 
+			console.log("-+++++++++++++++++++++++deleteQuestion 3 id:", oneQuestion.imgId );
 			if(oneQuestion.imgId){
-				oldImgIds.push(oneQuestion.imgId);	
+				removeTestIdFromImage(oneQuestion.imgId, testId);	
 			}
 			oneQuestion.remove({},function(err) {
-				if(err){	
-					console.log("oneQuestion.remove.---------------------0-------");
-					log.error('Internal error(%d): %s',res.statusCode,err.message);
-					callback(err, oldImgIds);
-				} else {
-						console.log("oneQuestion.remove.---------------------1-------");
-					if (typeof(callback) == "function"){
-						callback(err, oldImgIds);
-					}
+				if (typeof(callback) == "function"){
+					callback(err);
 				}	
 			});	
 		} else {
-			console.log("oneQuestion.---------------------------4--", err);
-			log.error('Internal error(%d): %s',res.statusCode,err.message);
+			if (typeof(callback) == "function"){
+				callback(err);
+			}
 		}
 	});
 	
 	
+};
+
+function removeTestIdFromImage(imgId, testId){
+	console.log("-#########################--------removeTestIdFromImage");
+	TestImage.findById(imgId, function (err, oneTestImage) {
+		if(!oneTestImage) {
+			log.error('image not found by id:--2 ', imgId);		
+		} else if (!err) {
+			console.log("-#########################--------removeTestIdFromImage 2");
+			oneTestImage.testIds = outData.removeValueFromArray(oneTestImage.testIds, testId);
+			oneTestImage.save(function(err){
+				console.log("-#########################--------removeTestIdFromImage 3", err);	
+				if(err) {
+					log.error('Internal error(%d): %s', res.statusCode, err.message);	
+				}	
+			});
+		} else {			
+			log.error('Internal error(%d): %s',res.statusCode,err.message);
+		}
+	});		
 };
 
 function deleteTest(testToDel, callback){

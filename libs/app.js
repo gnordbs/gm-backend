@@ -103,8 +103,30 @@ module.exports = app;
 
 
 
-var oldImgIds = [1,2,3,4];
-var a = [2,3];
 
-var idsToDelete = oldImgIds.filter(function(i) {return a.indexOf(i) < 0;});	
-console.log(idsToDelete);
+
+
+var oldImgIds = [1,2,3,4,1,1,1,2,2,2,3,4,5,5,5,5,5,6];
+ console.log(oldImgIds);
+var newoldImgIds = oldImgIds.map(function(id){
+	if(id !== 3) return id;
+	
+});
+console.log(newoldImgIds);
+
+
+function removeA(arr) {
+    var what, a = arguments, L = a.length, ax;
+    while (L > 1 && arr.length) {
+        what = a[--L];
+        while ((ax= arr.indexOf(what)) !== -1) {
+            arr.splice(ax, 1);
+        }
+    }
+    return arr;
+}
+
+var ary = ['three', 'seven', 'eleven'];
+
+
+console.log(removeA(ary, 'seven'));
