@@ -29,7 +29,6 @@ router.get('/:id',  function(req, res) {
 		} else if (!err) {
 			
 			UserAnswer.find({'testId': req.params.id}, function (err, queryUserAnswer) {	
-				console.log("queryUserAnswer-----",queryUserAnswer);
 				if(!queryUserAnswer) {
 					res.statusCode = 404;
 					res.end();

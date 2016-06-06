@@ -13,7 +13,6 @@ var util = require('util');
 
 
 router.get('/:id',  function(req, res) {
-	console.log('---------------------------question get id called');
 	Question.findById(req.params.id, function (err, oneQuestion) {
 		
 		if(!oneQuestion) {

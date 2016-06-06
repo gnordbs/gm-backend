@@ -75,8 +75,6 @@ app.use('/api/question', questions);
 app.use('/api/oauth/token', oauth2.token);
 
 // image storage static
-//app.use(express.static('public'));
-//app.use(express.static('uploads' + '/public'));
 app.use('/images',express.static('images'));
 
 // catch 404 and forward to error handler
@@ -100,33 +98,3 @@ app.use(function(err, req, res, next){
 });
 
 module.exports = app;
-
-
-
-
-
-
-var oldImgIds = [1,2,3,4,1,1,1,2,2,2,3,4,5,5,5,5,5,6];
- console.log(oldImgIds);
-var newoldImgIds = oldImgIds.map(function(id){
-	if(id !== 3) return id;
-	
-});
-console.log(newoldImgIds);
-
-
-function removeA(arr) {
-    var what, a = arguments, L = a.length, ax;
-    while (L > 1 && arr.length) {
-        what = a[--L];
-        while ((ax= arr.indexOf(what)) !== -1) {
-            arr.splice(ax, 1);
-        }
-    }
-    return arr;
-}
-
-var ary = ['three', 'seven', 'eleven'];
-
-
-console.log(removeA(ary, 'seven'));
