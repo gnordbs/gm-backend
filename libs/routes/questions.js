@@ -22,9 +22,7 @@ router.get('/:id',  function(req, res) {
 			//return res.json({ 
 			//	error: 'Not found' 
 			//});
-		}
-		
-		if (!err) {
+		} else if (!err) {
 			return res.json(outData.questionUserJson(oneQuestion));	
 			//return res.json(outData.routesToJsonV_1(oneTest));
 		} else {

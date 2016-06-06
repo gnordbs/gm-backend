@@ -16,6 +16,7 @@ var api = require('./routes/api');
 var admin_tests = require('./routes/admin_tests');
 var admin_questions = require('./routes/admin_questions');
 var tests = require('./routes/tests');
+var uploads = require('./routes/uploads');
 var questions = require('./routes/questions');
 var Statistics = require('./routes/statistics');
 var util = require('util');
@@ -69,8 +70,14 @@ app.use('/api/admin/question/:id',admin_questions);
 app.use('/api/admin/question', admin_questions);
 app.use('/api/admin/statistics', Statistics);
 app.use('/api/test', tests);
+app.use('/api/saveimage', uploads);
 app.use('/api/question', questions);
 app.use('/api/oauth/token', oauth2.token);
+
+// image storage static
+//app.use(express.static('public'));
+//app.use(express.static('uploads' + '/public'));
+app.use('/images',express.static('images'));
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next){
@@ -93,3 +100,11 @@ app.use(function(err, req, res, next){
 });
 
 module.exports = app;
+
+
+
+var oldImgIds = [1,2,3,4];
+var a = [2,3];
+
+var idsToDelete = oldImgIds.filter(function(i) {return a.indexOf(i) < 0;});	
+console.log(idsToDelete);

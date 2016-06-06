@@ -44,9 +44,7 @@ router.get('/:id',  function(req, res) {
 			//return res.json({ 
 			//	error: 'Not found' 
 			//});
-		}
-		
-		if (!err) {
+		} else if (!err) {
 			return res.json(outData.testToJson(oneTest));	
 			//return res.json(outData.routesToJsonV_1(oneTest));
 		} else {
@@ -94,8 +92,7 @@ router.post('/', function(req, res) {
 				if(!savedQuestion) {
 					res.statusCode = 404;
 					res.end();
-				}			
-				if (!err) {
+				} else if (!err) {
 					console.log("------findById-------");
 					
 						switch (savedQuestion.type){	
