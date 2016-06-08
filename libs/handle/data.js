@@ -1,4 +1,4 @@
-exports.toJsonDeletePass = 	function (user) {
+/*exports.toJsonDeletePass = 	function (user) {
 	
 	var data = user.driveRoute.map(function(driveRoute) {
 	return { "type": "routes", "id": driveRoute };
@@ -84,7 +84,7 @@ exports.routeToJson = 	function (route) {
 	return item1;
 	
 };
-
+*/
 
 //   gm add
 

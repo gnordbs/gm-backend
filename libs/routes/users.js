@@ -6,7 +6,7 @@ var libs = process.cwd() + '/libs/';
 
 var db = require(libs + 'db/mongoose');
 var User = require(libs + 'model/user');
-var DriveRoute = require(libs + 'model/driveroute');
+//var DriveRoute = require(libs + 'model/driveroute');
 var outData = require(libs + 'handle/data');
 var util = require('util');
 
@@ -35,7 +35,7 @@ router.get('/', passport.authenticate('bearer', { session: false }), function(re
 });
 */
 
-
+/*
 router.get('/', passport.authenticate('bearer', { session: false }), function(req, res) {
 	console.log("get users/    " + req.user);
 	//var user = req.user.toObject();
@@ -78,34 +78,9 @@ router.get('/:id', function(req, res) {
 
 });
 
-/*
-router.get('/:id', function(req, res) {
-        // req.authInfo is set using the `info` argument supplied by
-        // `BearerStrategy`.  It is typically used to indicate scope of the token,
-        // and used in access control checks.  For illustrative purposes, this
-        // example simply returns the scope in the response.
-		console.log("/users/:id     " + req.params.id);
 
-		User.findById(req.params.id).select("-hashedPassword").select("-salt").exec(
-		function(err, user) {
-					console.log("user     " + user);
-			if (err) { 
-				console.log('err   ' + err)
-				res.json({'error' :err});
-            } else if (!user) { 
-            	res.json({'error' :'no user'}); 
-				} else {
-					res.json({ 
-						attributes: user, 
-						type: 'users' 
-					});	
-				}
-		});
-
-});
 */
-
-
+/*
 router.delete('/:id', passport.authenticate('bearer', { session: false }), function(req, res) {
 	var user = req.user;
 	//console.log("/delete/:id     " + req.params.id);
@@ -143,25 +118,7 @@ router.delete('/:id', passport.authenticate('bearer', { session: false }), funct
 						  
 						  // removed!
 					});
-					/*
-					DriveRoute.find({'driver_id' : user.id },function(err, route){
-						if(err){				
-							console.log('user routes find error:   ' + err)
-						} 
-						else{
-							//console.log('route.remove route:   ' + route)
-							console.log('route.remove route:   ');
-							route.remove({},function(err) {
-								if(err){				
-									console.log('removing user routes error:   ' + err)
-								} 
-								else {
-									console.log('user routes removed OK')
-								}
-							})
-						}
-					});	
-					*/
+
 				} 
 				else {
 				console.log('no user routes to remove');
@@ -186,7 +143,7 @@ router.delete('/:id', passport.authenticate('bearer', { session: false }), funct
 	});
 });		
 
-	
+*/	
 
 
 	
@@ -198,27 +155,23 @@ router.post('/', function(req, res) {
 	var user = new User({
 		username : req.body.username,
 		password: req.body.password
-		});
-	//	console.log("/users/:id     " +
+	});
+
 	user.save(function (err) {
 		if (!err) {
 			console.info("New user created with id: %s", user.id);
-			return res.json({ 
-						data: outData.toJsonDeletePass(user) 
-					});
-		} else {
+
+			res.statusCode = 200;
+			res.end();
+		} else {		
 			if(err.name === 'ValidationError') {
 				res.statusCode = 400;
-				res.json({ 
-					error: 'Validation error' 
-				});
+				res.end();
 			} else {
 				res.statusCode = 500;
-				res.json({ 
-					error: 'Server error' 
-				});
+				res.end();
 			}
-			console.error('Internal error(%d): %s', res.statusCode, err.message);
+			log.error('Internal error(%d): %s', res.statusCode, err.message);
 		}
 	});
 

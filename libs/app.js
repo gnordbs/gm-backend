@@ -19,6 +19,7 @@ var tests = require('./routes/tests');
 var uploads = require('./routes/uploads');
 var questions = require('./routes/questions');
 var Statistics = require('./routes/statistics');
+var users = require('./routes/users');
 var util = require('util');
 
 var app = express();
@@ -44,7 +45,7 @@ app.use(function(req, res, next) {
   	//res.setHeader('Access-Control-Allow-Headers', 'Origin, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, X-Response-Time, X-PINGOTHER, X-CSRF-Token,Authorization');
 	
 	//res.setHeader('Access-Control-Allow-Methods', '*');
-    res.setHeader('Access-Control-Expose-Headers', 'X-Api-Version, X-Request-Id, X-Response-Time, X-Uid, X-Authentication');
+    res.setHeader('Access-Control-Expose-Headers', 'X-Api-Version, X-Request-Id, X-Response-Time, X-Uid, X-Authentication, WWW-Authenticate');
 	if ('OPTIONS' == req.method) {
       res.sendStatus(200);
     }
@@ -73,6 +74,7 @@ app.use('/api/test', tests);
 app.use('/api/saveimage', uploads);
 app.use('/api/question', questions);
 app.use('/api/oauth/token', oauth2.token);
+app.use('/api/register', users);
 
 // image storage static
 app.use('/images',express.static('images'));

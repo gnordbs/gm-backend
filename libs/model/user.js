@@ -22,9 +22,7 @@ var mongoose = require('mongoose'),
 		created: {
 			type: Date,
 			default: Date.now
-		},
-		driveRoute: {  type: Array },
-		
+		}		
 	});
 
 User.methods.encryptPassword = function(password) {

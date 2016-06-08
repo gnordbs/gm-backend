@@ -7,7 +7,7 @@ var libs = process.cwd() + '/libs/';
 
 var config = require(libs + 'config');
 
-//var User = require(libs + 'model/user'); // check
+var User = require(libs + 'model/user'); // check
 var Client = require(libs + 'model/client');
 var AccessToken = require(libs + 'model/accessToken');
 var RefreshToken = require(libs + 'model/refreshToken');
@@ -40,7 +40,9 @@ passport.use(new BasicStrategy(
 passport.use(new ClientPasswordStrategy(
     function(clientId, clientSecret, done) {
 		console.log("ClientPasswordStrategy called");
+		console.log("ClientPasswordStrategy called ------1 ");
         Client.findOne({ clientId: clientId }, function(err, client) {
+			console.log("ClientPasswordStrategy called ------ 2", client);
             if (err) { 
 				console.log("Client.findOne err 1");
             	return done(err); 
@@ -53,7 +55,7 @@ passport.use(new ClientPasswordStrategy(
             if (client.clientSecret !== clientSecret) { 
             	return done(null, false); 
             }
-
+			
             return done(null, client);
         });
     }
@@ -64,11 +66,12 @@ passport.use(new BearerStrategy(
 		console.log("BearerStrategy called");
 		console.log("accessToken             "  + accessToken);
         AccessToken.findOne({ token: accessToken }, function(err, token) {
-
+			console.log("accessToken      ----------------1   "  + token);
+			console.log("accessToken err     ----------------1   "  + err);
             if (err) { 
             	return done(err); 
             }
-
+	
             if (!token) { 
             	return done(null, false); 
             }

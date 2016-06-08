@@ -15,9 +15,8 @@ var TestImage = require(libs + 'model/image');
 var outData = require(libs + 'handle/data');
 var util = require('util');
 
-
-router.get('/',  function(req, res) {
-	console.log('----------------------GET request to api/tests/      ' );
+router.get('/',  passport.authenticate('bearer', { session: false }), function(req, res) {
+//router.get('/',  function(req, res) {
 	Test.find({}, function (err, allTests) {
 			
 		if(!allTests) {
@@ -33,9 +32,8 @@ router.get('/',  function(req, res) {
 	});
 });
 
-//router.get('/:id', passport.authenticate('bearer', { session: false }), function(req, res) {
-router.get('/:id',  function(req, res) {
-	//console.log('---------------------------tests get id called');
+router.get('/:id', passport.authenticate('bearer', { session: false }), function(req, res) {
+//router.get('/:id',  function(req, res) {
 	Test.findById(req.params.id, function (err, oneTest) {
 		
 		if(!oneTest) {
@@ -59,8 +57,8 @@ router.get('/:id',  function(req, res) {
 
 
 
-//router.post('/', passport.authenticate('bearer', { session: false }), function(req, res) {
-router.post('/', function(req, res) {
+router.post('/', passport.authenticate('bearer', { session: false }), function(req, res) {
+//router.post('/', function(req, res) {
 	//console.log('---------------------------tests post called');
 			
 	var attributes = req.body.data;
@@ -82,8 +80,8 @@ router.post('/', function(req, res) {
 });
 
 
-
-router.post('/:id', function(req, res) {
+router.post('/:id', passport.authenticate('bearer', { session: false }), function(req, res) {
+//router.post('/:id', function(req, res) {
 		
 	var attributes = req.body.data;
 	
@@ -448,8 +446,8 @@ function deleteImage(imageToDel, callback){
 
 
 
-//router.delete('/:id', passport.authenticate('bearer', { session: false }), function(req, res) {	
-router.delete('/:id',  function(req, res) {
+router.delete('/:id', passport.authenticate('bearer', { session: false }), function(req, res) {	
+//router.delete('/:id',  function(req, res) {
 		
 	clearOldtestData(req.params.id, function(err, testToDelete){
 		if(!err){		

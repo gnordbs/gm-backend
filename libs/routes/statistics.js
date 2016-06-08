@@ -19,7 +19,8 @@ router.get('/',  function(req, res) {
 });
 
 
-router.get('/:id',  function(req, res) {
+router.get('/:id', passport.authenticate('bearer', { session: false }), function(req, res) {
+//router.get('/:id',  function(req, res) {
 	
 	
 	Statistics.find({'testId': req.params.id}, function (err, allStats) {		
