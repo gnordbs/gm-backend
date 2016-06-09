@@ -25,14 +25,10 @@ passport.use(new BasicStrategy(
 				console.log(" !client.findOne err");
             	return done(null, false); 
             }
-			console.log("12124");
             if (client.clientSecret !== password) { 
             	return done(null, false); 
             }
-			console.log("1211241224     1241" + client);
-			console.log("12112   username" + username);
             return done(null, client);
-			console.log("1------------224     1241");
         });
     }
 ));
@@ -40,11 +36,10 @@ passport.use(new BasicStrategy(
 passport.use(new ClientPasswordStrategy(
     function(clientId, clientSecret, done) {
 		console.log("ClientPasswordStrategy called");
-		console.log("ClientPasswordStrategy called ------1 ");
         Client.findOne({ clientId: clientId }, function(err, client) {
-			console.log("ClientPasswordStrategy called ------ 2", client);
+			console.log("ClientPasswordStrategy called ----1 ", client);
+			console.log("ClientPasswordStrategy called err-1 ", err);
             if (err) { 
-				console.log("Client.findOne err 1");
             	return done(err); 
             }
 

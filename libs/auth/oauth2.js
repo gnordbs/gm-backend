@@ -26,7 +26,7 @@ var errFn = function (cb, err) {
 
 // Destroys any old tokens and generates a new access and refresh token
 var generateTokens = function (data, done) {
-
+	console.log('generateTokens----------');
 	// curries in `done` callback so we don't need to pass it
     var errorHandler = errFn.bind(undefined, done), 
 	    refreshToken,
@@ -49,6 +49,7 @@ var generateTokens = function (data, done) {
     refreshToken.save(errorHandler);
 
     token.save(function (err) {
+		console.log('generateToken main ---------- err= ',err);
     	if (err) {
 			
 			log.error(err);
@@ -85,8 +86,10 @@ aserver.exchange(oauth2orize.exchange.password(function(client, username, passwo
 
 // Exchange refreshToken for access token.
 aserver.exchange(oauth2orize.exchange.refreshToken(function(client, refreshToken, scope, done) {
-
+	console.log('Exchange refreshToken---');
 	RefreshToken.findOne({ token: refreshToken, clientId: client.clientId }, function(err, token) {
+			console.log('Exchange refreshToken---1', token);
+			console.log('Exchange refreshToken---2', err);
 		if (err) { 
 			return done(err); 
 		}
