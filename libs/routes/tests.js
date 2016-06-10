@@ -21,10 +21,13 @@ router.get('/',  function(req, res) {
 		if(!allTests) {
 			res.statusCode = 404;
 			res.end();
-		}
-		
-		if (!err) {
-			return res.json(outData.testlistToJson(allTests));
+		} else if (!err) {
+			
+			var allTestsPublic = allTests.filter(function(item) {
+				return testIsPublicCheck(item);
+			});
+	
+			return res.json(outData.testlistToJson(allTestsPublic));
 		} else {
 			res.statusCode = 500;
 			res.end();
@@ -41,12 +44,14 @@ router.get('/:id',  function(req, res) {
 		if(!oneTest) {
 			res.statusCode = 404;
 			res.end();
-			//return res.json({ 
-			//	error: 'Not found' 
-			//});
-		} else if (!err) {
+		} else if (!err) {		
+			var availavilityText = testTimingCheck(oneTest);
+			if(availavilityText !== ""){
+				oneTest.isAvailable = false;
+				oneTest.availabilityText = availavilityText;
+			}
+			
 			return res.json(outData.testToJson(oneTest));	
-			//return res.json(outData.routesToJsonV_1(oneTest));
 		} else {
 			res.statusCode = 500;
 			res.end();
@@ -191,6 +196,33 @@ router.post('/', function(req, res) {
 			
 });
 
+function testTimingCheck(oneTest){
+	var avText = "";
+	var startDate =  oneTest.startDate || '';
+	var endDate =  oneTest.endDate || '';
+	
+	var currentDate = new Date();
+	
+	console.log("date---- ", startDate, endDate, currentDate);
+	if(currentDate < startDate){
+		var startDay = startDate.toDateString();
+		avText = "This will be available on " + startDay;
+		return avText;	
+	} else if (currentDate < endDate) {
+		return avText;	
+	} else {
+		avText = "This test is already closed";
+		return avText;	
+	}
+}
+
+function testIsPublicCheck(oneTest){
+	if(oneTest && oneTest.isPublic){
+		return true;
+	} else {
+		return false;	
+	}
+}
 
 
 

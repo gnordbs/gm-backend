@@ -39,12 +39,8 @@ router.get('/:id', passport.authenticate('bearer', { session: false }), function
 		if(!oneTest) {
 			res.statusCode = 404;
 			res.end();
-			//return res.json({ 
-			//	error: 'Not found' 
-			//});
 		} else if (!err) {
 			return res.json(outData.testToJson(oneTest));	
-			//return res.json(outData.routesToJsonV_1(oneTest));
 		} else {
 			res.statusCode = 500;
 			res.end();
@@ -59,35 +55,12 @@ router.get('/:id', passport.authenticate('bearer', { session: false }), function
 
 router.post('/', passport.authenticate('bearer', { session: false }), function(req, res) {
 //router.post('/', function(req, res) {
-	//console.log('---------------------------tests post called');
 			
 	var attributes = req.body.data;
 	
-	//console.log('attributes  ' + attributes);
-	//console.log(util.inspect(req.body.data, {showHidden: false, depth: null}));
-	
-	createNewTest(attributes, function(err){
-		if(!err){
-			res.statusCode = 200;
-			res.end();	
-		} else {
-			res.statusCode = 500;
-			res.end();
-			log.error('Internal error(%d): %s', res.statusCode, err.message);						
-		}	
-	});
-	
-});
-
-
-router.post('/:id', passport.authenticate('bearer', { session: false }), function(req, res) {
-//router.post('/:id', function(req, res) {
-		
-	var attributes = req.body.data;
-	
-	clearOldtestData(req.params.id, function(err, testForUpdate){
-		if(!err){		
-			updateTest(testForUpdate, attributes, function(err){
+	verifyPostedTest(attributes, function(status){
+		if(status === 'ok'){
+			createNewTest(attributes, function(err){
 				if(!err){
 					res.statusCode = 200;
 					res.end();	
@@ -96,13 +69,44 @@ router.post('/:id', passport.authenticate('bearer', { session: false }), functio
 					res.end();
 					log.error('Internal error(%d): %s', res.statusCode, err.message);						
 				}	
-			});		
+			});	
 		} else {
-			res.statusCode = 500;
-			res.end();
-			log.error('Internal error(%d): %s', res.statusCode, err.message);		
+			res.status(400).send({ error: status});
+		}
+	});	
+});
+
+
+router.post('/:id', passport.authenticate('bearer', { session: false }), function(req, res) {
+//router.post('/:id', function(req, res) {
+		
+	var attributes = req.body.data;
+	
+	verifyPostedTest(attributes, function(status){
+		if(status === 'ok'){
+			clearOldtestData(req.params.id, function(err, testForUpdate){
+				if(!err){		
+					updateTest(testForUpdate, attributes, function(err){
+						if(!err){
+							res.statusCode = 200;
+							res.end();	
+						} else {
+							res.statusCode = 500;
+							res.end();
+							log.error('Internal error(%d): %s', res.statusCode, err.message);						
+						}	
+					});		
+				} else {
+					res.statusCode = 500;
+					res.end();
+					log.error('Internal error(%d): %s', res.statusCode, err.message);		
+				}
+			});
+		} else {
+			res.status(400).send({ error: status});
 		}
 	});
+	
 });
 
 
@@ -418,11 +422,147 @@ function deleteTest(testToDel, callback){
 	});
 };
 
+function verifyPostedTest(newTest, callback){
+	var status = "";
+	
+	if(newTest){
+		
+		if(!newTest.testName){
+			status+= 'Test have no name. ';
+		} 
+				
+		if(!newTest.questions.length){
+			status+= 'Test have no questions. ';
+		}
+			
+		if(!verifyTime(newTest.startDate, newTest.endDate)){
+			status+= 'Check start/end time. ';
+		}	
+		
+		var questionsVeryfy = true;
+		newTest.questions.forEach(function(item){	
+			if(!verifyQuestion(item)){				
+				questionsVeryfy = false;				
+			}
+		});
+		
+		if(!questionsVeryfy){
+			status+= 'Questions are incorect. ';
+		}
+		
+		if(status === ""){
+			status = 'ok';
+		}
+		
+		console.log("verify -- ",status);	
+		
+		if (typeof(callback) == "function"){
+			callback(status);
+		}	
+			
+	} else {
+		return 'Test is empty';	
+	}
+};
+
+function verifyQuestion(question){
+	var verified = true;
+	
+	if(question.imageIncluded && !question.imgId) {
+		verified = false;	
+	}
+
+	if(!question.textDescription){
+		verified = false;	
+	}
+	
+	if(question.type === "text") {// if type is text check that answer is present,
+		if(!question.textAnswer) {
+			verified = false;							
+		}
+	} else {
+		// check if there is more than 1 answer
+		if(question.allAnswers.length < 2) {
+			verified = false;	
+		}
+		// check if answers are filled or images are selected
+		if(question.answersAreImages) {
+			question.allAnswers.forEach(function(item){
+				if(!item.imgId){
+					verified = false;
+				}
+			});
+		} else {
+			question.allAnswers.forEach(function(item){
+				if(!item.text)	verified = false;
+			});	
+		}
+		// check if correct answers chosen	
+		//console.log(question);
+		if(!verifyAnswer(question)){
+			verified = false;	
+		}	
+	}
+	
+	return verified;
+};
+
+function verifyTime (startDate, endDate){		
+	if(endDate >= startDate && endDate && startDate){
+		return true;	
+	} else {
+		return false;	
+	}
+};
+
+function verifyAnswer (question){
+	var answersChosen = false;
+	if(question.type === "radio"){
+		question.allAnswers.forEach(function(item){
+			if(item.isDefault){
+				answersChosen = true;	
+			}	
+		});	
+	} else if(question.type === "checkbox"){
+		question.allAnswers.forEach(function(item){
+			if(item.isTrue){
+				answersChosen = true;	
+			}	
+		});	
+	}
+			
+	return answersChosen;
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /*
 function deleteImage(imageToDel, callback){
 	fs.unlink(imageToDel.url, (err) => {
 		if (err) throw err;
-		console.log('successfully deleted  --- ', imageToDel.url);
+		//console.log('successfully deleted  --- ', imageToDel.url);
 	});
 	imageToDel.remove({},function(err) {
 		if(err){		
