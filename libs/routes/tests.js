@@ -40,6 +40,7 @@ router.get('/',  function(req, res) {
 router.get('/:id',  function(req, res) {
 	//console.log('---------------------------tests get id called');
 	Test.findById(req.params.id, function (err, oneTest) {
+		console.log("oneTest..................qqq",oneTest);
 		
 		if(!oneTest) {
 			res.statusCode = 404;
@@ -47,11 +48,43 @@ router.get('/:id',  function(req, res) {
 		} else if (!err) {		
 			var availavilityText = testTimingCheck(oneTest);
 			if(availavilityText !== ""){
+				console.log("oneTest...not aval...............",availavilityText);
+				
 				oneTest.isAvailable = false;
 				oneTest.availabilityText = availavilityText;
+				oneTest.questions = [];
+				return res.json(outData.testToJson(oneTest));
+			} else {		
+				console.log("oneTest..................1",oneTest);
+				
+				async.map(oneTest.questions,
+					function(item, callback){	
+						//console.log("get test id--------------*", item);
+						getQuestionById(item, function(err, oneQuestion){
+							if(!err && oneQuestion){
+								callback(null, oneQuestion);	
+							} else {
+								callback(err);	
+							}
+						});					
+					},
+					function(err, results){
+						console.log("get test id--------------f", err, results);
+						if(err) {
+							res.statusCode = 500;
+							res.end();
+							log.error('Internal error(%d): %s',res.statusCode,err.message);	
+						}
+						if(results){
+							oneTest.questions = results;
+							//console.log("get test id----oneTest.quesions", oneTest.quesions);
+							
+							console.log("oneTest..................",oneTest);
+							return res.json(outData.testToJson(oneTest));	
+						}
+					}
+				);
 			}
-			
-			return res.json(outData.testToJson(oneTest));	
 		} else {
 			res.statusCode = 500;
 			res.end();
@@ -195,6 +228,21 @@ router.post('/', function(req, res) {
 			
 			
 });
+
+function getQuestionById(questionId, callback){
+	if (typeof(callback) == "function"){
+			
+		Question.findById(questionId, function (err, oneQuestion) {			
+			if(!oneQuestion) {
+				callback('Question not found: ', questionId);
+			} else if (!err) {
+				callback(err, outData.questionUserJson(oneQuestion));
+			} else {
+				callback(err);
+			}
+		});
+	}
+}
 
 function testTimingCheck(oneTest){
 	var avText = "";

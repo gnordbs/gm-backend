@@ -1,7 +1,7 @@
 {
     "port": 1337,
     "security": {
-        "tokenLife" : 3600
+        "tokenLife" : 86400
     },
     "mongoose": {
         "uri": "mongodb://localhost/gmTests"

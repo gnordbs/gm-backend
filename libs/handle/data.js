@@ -24,7 +24,7 @@ exports.testToJson = function (item) {
 	//var routes1 = routes.toArray();
 	//var routes1 = JSON.stringify(routes);
 		
-	
+	//console.log("item..................",item);
 	var newitem = {};	
 		
 	newitem.isAvailable = item.isAvailable,
@@ -35,7 +35,7 @@ exports.testToJson = function (item) {
 	newitem.endDate = item.endDate,
 	newitem.questions = item.questions;
 	newitem.id = item._id;
-
+	//console.log("newitem..................",newitem);
 	return newitem;	
 
 };

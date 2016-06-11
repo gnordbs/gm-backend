@@ -22,13 +22,15 @@ var Statistics = require('./routes/statistics');
 var users = require('./routes/users');
 var util = require('util');
 
+
+
 var app = express();
 ////////////////////////////////////
 ///////////////////////////////////////
 
 app.use(function(req, res, next) {
 	method = req.method;
-	//console.log('get req.method' + method);
+	console.log('get req.method' + method);
 	//console.log(req.headers['Access-Control-Request-Headers']);
 	//console.log(util.inspect(req.headers, {showHidden: false, depth: null}));
 	//console.log(req.headers);

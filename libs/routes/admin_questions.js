@@ -11,7 +11,7 @@ var Question = require(libs + 'model/question');
 var outData = require(libs + 'handle/data');
 var util = require('util');
 
-
+/*
 router.get('/:id',  function(req, res) {
 	console.log('---------------------------question get id called');
 	Question.findById(req.params.id, function (err, oneQuestion) {
@@ -35,7 +35,7 @@ router.get('/:id',  function(req, res) {
 	});
 });
 
-
+*/
 
 
 

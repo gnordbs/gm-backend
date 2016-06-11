@@ -11,7 +11,7 @@ var Question = require(libs + 'model/question');
 var outData = require(libs + 'handle/data');
 var util = require('util');
 
-
+/*
 router.get('/:id',  function(req, res) {
 	Question.findById(req.params.id, function (err, oneQuestion) {
 		
@@ -31,6 +31,6 @@ router.get('/:id',  function(req, res) {
 		}
 	});
 });
-
+*/
 
 module.exports = router;

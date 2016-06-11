@@ -32,15 +32,37 @@ router.get('/',  passport.authenticate('bearer', { session: false }), function(r
 	});
 });
 
+
 router.get('/:id', passport.authenticate('bearer', { session: false }), function(req, res) {
 //router.get('/:id',  function(req, res) {
 	Test.findById(req.params.id, function (err, oneTest) {
-		
 		if(!oneTest) {
 			res.statusCode = 404;
 			res.end();
 		} else if (!err) {
-			return res.json(outData.testToJson(oneTest));	
+			async.map(oneTest.questions,
+				function(item, callback){	
+					getQuestionById(item, function(err, oneQuestion){
+						if(!err && oneQuestion){
+							callback(null, oneQuestion);	
+						} else {
+							callback(err);	
+						}
+					});
+					
+				},
+				function(err, results){
+					if(err) {
+						res.statusCode = 500;
+						res.end();
+						log.error('Internal error(%d): %s',res.statusCode,err.message);	
+					}
+					if(results){
+						oneTest.questions = results;
+						return res.json(outData.testToJson(oneTest));	
+					}
+				}
+			);	
 		} else {
 			res.statusCode = 500;
 			res.end();
@@ -48,10 +70,6 @@ router.get('/:id', passport.authenticate('bearer', { session: false }), function
 		}
 	});
 });
-
-
-
-
 
 router.post('/', passport.authenticate('bearer', { session: false }), function(req, res) {
 //router.post('/', function(req, res) {
@@ -157,10 +175,10 @@ function createNewTest(attributes, cback){
 
 function saveTestToDb(newTest, rawQuestions, cback){
 	var statQuestions = [];
+	var postQuestions = [];
 	newTest.save(function (err,savedTest) {
 		if (!err) {	
-			async.forEachOf(rawQuestions,
-			function(item, index, callback){
+			async.forEachOf(rawQuestions, function(item, index, callback){
 				
 				var questionData = {
 					"textDescription":item['textDescription'] || '',
@@ -182,30 +200,30 @@ function saveTestToDb(newTest, rawQuestions, cback){
 							statQuestions.push({
 								"id": 'q_'+index,
 								"name": index	
-							});							
-							addQuestionIdToTest(savedTest.id, savedQuestion.id, function(err){
-								//if(!err){
+							});		
+							postQuestions[index] = savedQuestion.id;
+							callback(err);
+							/*
+							addQuestionIdToTest(savedTest.id, savedQuestion.id, index, function(err){
+
 									callback(err);	
-								/*} else {
-									log.error('Internal error(%d): %s',res.statusCode,err.message);										
-									if (typeof(cback) == "function"){
-										return cback(err);	
-									}	
-								}*/
-							});												
+
+							});	*/											
 						});	
 					});	
 					
 				});	
 			},
-			function(err){
-				if(!err){
-					createStatistics(savedTest, statQuestions);
+				function(err){				
+					if(!err){
+						addQuestionIdToTest(savedTest.id, postQuestions, function(err){	
+							if (typeof(cback) == "function"){
+								return cback(err);	
+							}			
+						});
+						createStatistics(savedTest, statQuestions);
+					}				
 				}
-				if (typeof(cback) == "function"){
-					return cback(err);	
-				}				
-			}
 			);	
 		} else {
 			log.error('Internal error(%d): %s', res.statusCode, err.message);	
@@ -309,15 +327,38 @@ function createStatistics(savedTest, statQuestions){
 		}
 	});
 };	
-
-function addQuestionIdToTest(testId, questionId, callback){
+/*
+function addQuestionIdToTest(testId, questionId, index, callback){
 	Test.findById(testId, function (err, oneTest) {								
 		if(!oneTest) {
 			if (typeof(callback) == "function"){
 				return callback('test not found by id:' + testId);	
 			}		
 		} else if (!err) {
-			oneTest.questions.push(questionId);
+			//oneTest.questions.push(questionId);
+			console.log("oneTest.questions --------------0   ",oneTest.questions);
+			console.log("oneTest.questions -----------index   ",index);
+			oneTest.questions[index] = questionId;	
+			console.log("oneTest.questions --------------1   ",oneTest.questions);
+			oneTest.save(function (err,savedTest) {
+				console.log("oneTest.savedTest --------------1   ",savedTest);
+				callback(err);
+			});										
+		} else {
+			log.error('Internal error(%d): %s',res.statusCode,err.message);
+			callback(err);
+		}
+	});	
+};*/
+
+function addQuestionIdToTest(testId, questionIds, callback){
+	Test.findById(testId, function (err, oneTest) {								
+		if(!oneTest) {
+			if (typeof(callback) == "function"){
+				return callback('test not found by id:' + testId);	
+			}		
+		} else if (!err) {
+			oneTest.questions = questionIds;	
 			oneTest.save(function (err,savedTest) {
 				callback(err);
 			});										
@@ -326,9 +367,7 @@ function addQuestionIdToTest(testId, questionId, callback){
 			callback(err);
 		}
 	});	
-}
-
-
+};
 
 function parseQuestionForImgUrl(questionData, testId, callback){
 	if(questionData.imageIncluded && questionData.imgId){
@@ -420,6 +459,21 @@ function deleteQuestion(testId, questionToDelId, callback){
 		}
 	});
 };
+
+function getQuestionById(questionId, callback){
+	if (typeof(callback) == "function"){
+			
+		Question.findById(questionId, function (err, oneQuestion) {			
+			if(!oneQuestion) {
+				callback('Question not found: ', questionId);
+			} else if (!err) {
+				callback(err, oneQuestion);
+			} else {
+				callback(err);
+			}
+		});
+	}
+}
 
 function removeTestIdFromImage(imgId, testId){
 	TestImage.findById(imgId, function (err, oneTestImage) {

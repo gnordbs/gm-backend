@@ -63,7 +63,7 @@ var generateTokens = function (data, done) {
 
 // Exchange username & password for access token.
 aserver.exchange(oauth2orize.exchange.password(function(client, username, password, scope, done) {
-		//console.log("oauth2orize.exchange.password called");
+	console.log("---------------exchange.password called");
 	User.findOne({ username: username }, function(err, user) {
 		
 		if (err) { 
@@ -86,7 +86,7 @@ aserver.exchange(oauth2orize.exchange.password(function(client, username, passwo
 
 // Exchange refreshToken for access token.
 aserver.exchange(oauth2orize.exchange.refreshToken(function(client, refreshToken, scope, done) {
-	//console.log('Exchange refreshToken---');
+	console.log('-----------------exchange. refreshToken---');
 	RefreshToken.findOne({ token: refreshToken, clientId: client.clientId }, function(err, token) {
 		//	console.log('Exchange refreshToken---1', token);
 		//	console.log('Exchange refreshToken---2', err);
@@ -101,7 +101,8 @@ aserver.exchange(oauth2orize.exchange.refreshToken(function(client, refreshToken
 		User.findById(token.userId, function(err, user) {
 			if (err) { return done(err); }
 			if (!user) { return done(null, false); }
-
+			
+			
 			var model = { 
 				userId: user.userId, 
 				clientId: client.clientId 
