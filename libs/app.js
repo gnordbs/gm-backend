@@ -28,12 +28,12 @@ var app = express();
 
 app.use(function(req, res, next) {
 	method = req.method;
-	console.log('get req.method' + method);
+	//console.log('get req.method' + method);
 	//console.log(req.headers['Access-Control-Request-Headers']);
 	//console.log(util.inspect(req.headers, {showHidden: false, depth: null}));
 	//console.log(req.headers);
 	res.setHeader('Access-Control-Allow-Methods', 'POST, GET, PUT, DELETE, OPTIONS');
-	console.log(req.headers['access-control-request-headers']);
+	//console.log(req.headers['access-control-request-headers']);
     res.setHeader('Access-Control-Allow-Origin', '*');
 	//res.setHeader('Access-Control-Allow-Origin', 'http://localhost:4200/about');
 	//var AllowHeaders = req.header.Access-Control-Request-Headers;

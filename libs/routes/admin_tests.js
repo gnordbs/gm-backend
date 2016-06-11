@@ -109,6 +109,30 @@ router.post('/:id', passport.authenticate('bearer', { session: false }), functio
 	
 });
 
+router.delete('/:id', passport.authenticate('bearer', { session: false }), function(req, res) {	
+//router.delete('/:id',  function(req, res) {
+		
+	clearOldtestData(req.params.id, function(err, testToDelete){
+		if(!err){		
+			deleteTest(testToDelete, function(err){
+				if(!err){
+					res.statusCode = 200;
+					res.end();	
+				} else {
+					res.statusCode = 500;
+					res.end();
+					log.error('Internal error(%d): %s', res.statusCode, err.message);						
+				}	
+			});	
+		} else {
+			res.statusCode = 500;
+			res.end();
+			log.error('Internal error(%d): %s', res.statusCode, err.message);		
+		}
+	});
+	
+});
+
 
 function createNewTest(attributes, cback){
 	var rawQuestions =  attributes['questions'];	
@@ -453,15 +477,15 @@ function verifyPostedTest(newTest, callback){
 		if(status === ""){
 			status = 'ok';
 		}
-		
-		console.log("verify -- ",status);	
-		
+			
 		if (typeof(callback) == "function"){
 			callback(status);
 		}	
 			
 	} else {
-		return 'Test is empty';	
+		if (typeof(callback) == "function"){
+			callback('Test is empty');
+		}
 	}
 };
 
@@ -538,26 +562,6 @@ function verifyAnswer (question){
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 /*
 function deleteImage(imageToDel, callback){
 	fs.unlink(imageToDel.url, (err) => {
@@ -578,37 +582,5 @@ function deleteImage(imageToDel, callback){
 	});	
 };
 */
-
-
-
-
-
-
-
-
-router.delete('/:id', passport.authenticate('bearer', { session: false }), function(req, res) {	
-//router.delete('/:id',  function(req, res) {
-		
-	clearOldtestData(req.params.id, function(err, testToDelete){
-		if(!err){		
-			deleteTest(testToDelete, function(err){
-				if(!err){
-					res.statusCode = 200;
-					res.end();	
-				} else {
-					res.statusCode = 500;
-					res.end();
-					log.error('Internal error(%d): %s', res.statusCode, err.message);						
-				}	
-			});	
-		} else {
-			res.statusCode = 500;
-			res.end();
-			log.error('Internal error(%d): %s', res.statusCode, err.message);		
-		}
-	});
-	
-});
-
 
 module.exports = router;
