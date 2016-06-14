@@ -19,6 +19,7 @@ var tests = require('./routes/tests');
 var uploads = require('./routes/uploads');
 var questions = require('./routes/questions');
 var Statistics = require('./routes/statistics');
+//var StatisticsExport = require('./routes/statistics_export');
 var users = require('./routes/users');
 var util = require('util');
 
@@ -72,6 +73,7 @@ app.use('/api/admin/test/:id', admin_tests);
 app.use('/api/admin/question/:id',admin_questions);
 app.use('/api/admin/question', admin_questions);
 app.use('/api/admin/statistics', Statistics);
+//app.use('/api/admin/export', StatisticsExport);
 app.use('/api/test', tests);
 app.use('/api/saveimage', uploads);
 app.use('/api/question', questions);
