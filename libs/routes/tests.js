@@ -10,12 +10,15 @@ var db = require(libs + 'db/mongoose');
 var Test = require(libs + 'model/test');
 var Question = require(libs + 'model/question');
 var UserAnswer = require(libs + 'model/userAnswer');
+var AccessToken = require(libs + 'model/accessToken');
+var User = require(libs + 'model/user');
 var outData = require(libs + 'handle/data');
 var util = require('util');
 
 
-router.get('/',  function(req, res) {
-
+router.get('/', authenticateUser,  function(req, res) {
+//router.get('/', passport.authenticate('bearer', { session: false }),  function(req, res) {
+	
 	Test.find({}, function (err, allTests) {
 			
 		if(!allTests) {
@@ -36,11 +39,11 @@ router.get('/',  function(req, res) {
 	});
 });
 
-
-router.get('/:id',  function(req, res) {
+router.get('/:id', authenticateUser, function(req, res) {
+//router.get('/:id', passport.authenticate('bearer', { session: false }), function(req, res) {
 	//console.log('---------------------------tests get id called');
 	Test.findById(req.params.id, function (err, oneTest) {
-		console.log("oneTest..................qqq",oneTest);
+		//console.log("oneTest..................qqq",oneTest);
 		
 		if(!oneTest) {
 			res.statusCode = 404;
@@ -48,14 +51,14 @@ router.get('/:id',  function(req, res) {
 		} else if (!err) {		
 			var availavilityText = testTimingCheck(oneTest);
 			if(availavilityText !== ""){
-				console.log("oneTest...not aval...............",availavilityText);
+				//console.log("oneTest...not aval...............",availavilityText);
 				
 				oneTest.isAvailable = false;
 				oneTest.availabilityText = availavilityText;
 				oneTest.questions = [];
 				return res.json(outData.testToJson(oneTest));
 			} else {		
-				console.log("oneTest..................1",oneTest);
+				//console.log("oneTest..................1",oneTest);
 				
 				async.map(oneTest.questions,
 					function(item, callback){	
@@ -69,7 +72,7 @@ router.get('/:id',  function(req, res) {
 						});					
 					},
 					function(err, results){
-						console.log("get test id--------------f", err, results);
+						//console.log("get test id--------------f", err, results);
 						if(err) {
 							res.statusCode = 500;
 							res.end();
@@ -79,7 +82,7 @@ router.get('/:id',  function(req, res) {
 							oneTest.questions = results;
 							//console.log("get test id----oneTest.quesions", oneTest.quesions);
 							
-							console.log("oneTest..................",oneTest);
+							//console.log("oneTest..................",oneTest);
 							return res.json(outData.testToJson(oneTest));	
 						}
 					}
@@ -97,137 +100,173 @@ router.get('/:id',  function(req, res) {
 
 
 
+router.post('/', authenticateUser, function(req, res) {
 //router.post('/', passport.authenticate('bearer', { session: false }), function(req, res) {
-router.post('/', function(req, res) {
 	//console.log('---------------------------tests post called');
 		
-	var attributes = req.body.data;
+	var tHead = req.get("Authorization");
+	if(tHead.indexOf("Bearer") === 0){
+		token = tHead.slice(7);	
+	}
+		
+	getUserData(token, function(err, userData){
+		if(!userData) {
+			res.statusCode = 404;
+			res.end();
+		} else if (!err) {
+			// save test results
+			//console.log(userData);	
+			
+			var attributes = req.body.data;
 
-	//var rawQuestions =  attributes['questions'];
-	
-	verifyPostedTest(attributes, function(status){
-		if(status === 'ok'){		
-			var newUserAnswer = new UserAnswer({ 
-				"testId": attributes.id,		
-				"name": attributes.userForm.name,
-				"surname": attributes.userForm.surname,
-				"phone": attributes.userForm.phone,
-				"email": attributes.userForm.email,
-				"rating": "",
-				"answers": [],
-			});
-			
-			
-			var rawAnswers =  attributes['questions'];
-			var ratio = 0;
-						
-			async.forEachOf(rawAnswers,
-				function(item, answerIndex, callback){
-					Question.findById(item.id, function (err, savedQuestion) {
-						
-						if(!savedQuestion) {
-							res.statusCode = 404;
-							res.end();
-						} else if (!err) {
+			verifyPostedTest(attributes, function(status){
+				if(status === 'ok'){		
+					var newUserAnswer = new UserAnswer({ 
+						"testId": attributes.id,		
+						"name": userData.firstName,
+						"surname": userData.lastName,
+						"phone": userData.phone,
+						"email": userData.email,
+						"rating": "",
+						"answers": [],
+					});
+									
+					var rawAnswers =  attributes['questions'];
+					var ratio = 0;
+					
+					async.forEachOf(rawAnswers,
+					function(item, answerIndex, callback){
+						Question.findById(item.id, function (err, savedQuestion) {
 							
+							if(!savedQuestion) {
+								res.statusCode = 404;
+								res.end();
+							} else if (!err) {
+								
 								switch (savedQuestion.type){	
 									case "text":
 									
-										var isCorrect = false;
-										if(savedQuestion.textAnswer === item.textAnswer){
-											isCorrect = true;
-											ratio++;
-										}
-										newUserAnswer.answers.push({
-											"qId":'q_'+answerIndex,
-											"isCorrect": isCorrect
-										});
-										callback();
+									var isCorrect = false;
+									if(savedQuestion.textAnswer === item.textAnswer){
+										isCorrect = true;
+										ratio++;
+									}
+									newUserAnswer.answers.push({
+										"qId":'q_'+answerIndex,
+										"isCorrect": isCorrect
+									});
+									callback();
 									break;
 									case "radio":
-										
-										var isCorrect = true;
-										savedQuestion.allAnswers.forEach(function(savedAnswer, index){
-											if(item.allAnswers[index]){
-												if(savedAnswer.isDefault !== item.allAnswers[index].isDefault){
-													isCorrect = false;	
-												}	
-											} else {
+									
+									var isCorrect = true;
+									savedQuestion.allAnswers.forEach(function(savedAnswer, index){
+										if(item.allAnswers[index]){
+											if(savedAnswer.isDefault !== item.allAnswers[index].isDefault){
 												isCorrect = false;	
 											}	
-										});
-										
-										if(isCorrect) ratio++;
-										
-										newUserAnswer.answers.push({
-											"qId": 'q_'+answerIndex,
-											"isCorrect": isCorrect
-										});
-										callback();
+										} else {
+											isCorrect = false;	
+										}	
+									});
+									
+									if(isCorrect) ratio++;
+									
+									newUserAnswer.answers.push({
+										"qId": 'q_'+answerIndex,
+										"isCorrect": isCorrect
+									});
+									callback();
 									break;
 									case "checkbox":
 									
-										var isCorrect = true;
-										savedQuestion.allAnswers.forEach(function(savedAnswer, index){
-											if(item.allAnswers[index]){
-												if(savedAnswer.isTrue !== item.allAnswers[index].isTrue){
-													isCorrect = false;	
-												}	
-											} else {
+									var isCorrect = true;
+									savedQuestion.allAnswers.forEach(function(savedAnswer, index){
+										if(item.allAnswers[index]){
+											if(savedAnswer.isTrue !== item.allAnswers[index].isTrue){
 												isCorrect = false;	
-											}
-										});
-										
-										if(isCorrect) ratio++;
-										
-										newUserAnswer.answers.push({
-											"qId": 'q_'+answerIndex,
-											"isCorrect": isCorrect
-										});
-										callback();
+											}	
+										} else {
+											isCorrect = false;	
+										}
+									});
+									
+									if(isCorrect) ratio++;
+									
+									newUserAnswer.answers.push({
+										"qId": 'q_'+answerIndex,
+										"isCorrect": isCorrect
+									});
+									callback();
 									break;
 								}
-							
-											
+								
+								
+							} else {
+								res.statusCode = 500;
+								res.end();
+								log.error('Internal error(%d): %s',res.statusCode,err.message);
+							}
+						});
+					},
+					function(err){
+						if (!err) {
+							newUserAnswer.rating = ratio + '/' + rawAnswers.length;
+							newUserAnswer.save(function (err,savedUserAnswer) {
+								if (!err) {	
+									res.statusCode = 200;
+									res.end();			
+								} else {
+									if(err.name === 'ValidationError') {
+										res.statusCode = 400;
+										res.end();
+									} else {
+										res.statusCode = 500;
+										res.end();
+									}
+									log.error('Internal error(%d): %s', res.statusCode, err.message);
+								}
+							});	
 						} else {
 							res.statusCode = 500;
 							res.end();
 							log.error('Internal error(%d): %s',res.statusCode,err.message);
 						}
-					});
-				},
-				function(err){
-					if (!err) {
-						newUserAnswer.rating = ratio + '/' + rawAnswers.length;
-						newUserAnswer.save(function (err,savedUserAnswer) {
-							if (!err) {	
-								res.statusCode = 200;
-								res.end();			
-							} else {
-								if(err.name === 'ValidationError') {
-									res.statusCode = 400;
-									res.end();
-								} else {
-									res.statusCode = 500;
-									res.end();
-								}
-								log.error('Internal error(%d): %s', res.statusCode, err.message);
-							}
-						});	
-					} else {
-						res.statusCode = 500;
-						res.end();
-						log.error('Internal error(%d): %s',res.statusCode,err.message);
 					}
+					);
+				} else {
+					res.status(400).send({ error: status});
 				}
-			);
+			});
+			
 		} else {
-			res.status(400).send({ error: status});
-		}
-	});
-			
-			
+			res.statusCode = 500;
+			res.end();
+			log.error('Internal error(%d): %s',res.statusCode,err.message);
+		}	
+	});	
 });
+
+function getUserData(accessToken, callback) {
+		console.log("BearerStrategy_admin called");
+        AccessToken.findOne({ token: accessToken }, function(err, token) {
+            if (err) { 
+            	callback(err); 
+            } else if (!token) { 
+            	callback("token not found", null); 
+            }
+
+            User.findById(token.userId, function(err, user) {
+                if (err) { 
+                	callback(err); 
+                } else if (!user) { 
+                	callback("user not found", null); 
+                }
+
+                callback(null, user);
+            });
+        });
+    }
 
 function getQuestionById(questionId, callback){
 	if (typeof(callback) == "function"){
@@ -275,12 +314,12 @@ function verifyPostedTest(newTest, callback){
 	var status = "";
 	
 	if(newTest){
-			
+		/*	// user form moved to registration
 		var userForm = newTest.userForm;
 		// check if user form data is filled
 		if(!(userForm.name && userForm.surname && userForm.phone && userForm.email)){
 			status+= "User data is incorrect. ";
-		} 	
+		} 	*/
 		
 		// check if all questions are correct
 		var questionsVeryfy = true;
@@ -344,6 +383,41 @@ function verifyAnswer (question){
 	}
 	
 	return answersChosen;
+};
+
+function authenticateUser(req, res, next){
+	passport.authenticate('bearer', { session: false }, function(err, user, info) {	
+		if (err) { 
+			res.set('WWW-Authenticate', err);
+			res.statusCode = 401;
+			res.json(err);	
+		} else if (!user) {	
+			var error = getErrObjectFromInfo(info);
+			res.set('WWW-Authenticate', info);
+			res.statusCode = 401;
+			res.json(error);	
+		} else {
+			next();	
+		}
+	})(req, res);	
+};
+
+function getErrObjectFromInfo(info){
+	if(info){
+		var data = info.split(',');
+		var error = {};
+		
+		data.forEach(function(item){	
+				if(item.indexOf("error_description") > -1){		
+				error.error_description = item.substring(item.indexOf('"')+1,item.lastIndexOf('"'));	
+			} else if(item.indexOf("error") > -1){
+				error.error = item.substring(item.indexOf('"')+1,item.lastIndexOf('"'));	
+			}
+		});	
+		return error;
+	} else {
+		return "";	
+	}
 };
 
 

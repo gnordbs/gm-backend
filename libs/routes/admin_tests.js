@@ -15,8 +15,10 @@ var TestImage = require(libs + 'model/image');
 var outData = require(libs + 'handle/data');
 var util = require('util');
 
-router.get('/',  passport.authenticate('bearer', { session: false }), function(req, res) {
+/*
+router.get('/',  passport.authenticate('bearer_admin', { session: false }), function(req, res) {
 //router.get('/',  function(req, res) {
+	
 	Test.find({}, function (err, allTests) {
 			
 		if(!allTests) {
@@ -30,10 +32,28 @@ router.get('/',  passport.authenticate('bearer', { session: false }), function(r
 			log.error('Internal error(%d): %s',res.statusCode,err.message);
 		}
 	});
-});
+});*/
 
+router.get('/', authenticateAdmin,
+	function(req, res) {
+		Test.find({}, function (err, allTests) {
+				
+			if(!allTests) {
+				res.statusCode = 404;
+				res.end();
+			} else if (!err) {
+				return res.json(outData.testlistToJson(allTests));
+			} else {
+				res.statusCode = 500;
+				res.end();
+				log.error('Internal error(%d): %s',res.statusCode,err.message);
+			}
+		});
+	}
+);
 
-router.get('/:id', passport.authenticate('bearer', { session: false }), function(req, res) {
+router.get('/:id', authenticateAdmin, function(req, res) {
+//router.get('/:id', passport.authenticate('bearer_admin', { session: false }), function(req, res) {
 //router.get('/:id',  function(req, res) {
 	Test.findById(req.params.id, function (err, oneTest) {
 		if(!oneTest) {
@@ -71,7 +91,9 @@ router.get('/:id', passport.authenticate('bearer', { session: false }), function
 	});
 });
 
-router.post('/', passport.authenticate('bearer', { session: false }), function(req, res) {
+
+router.post('/', authenticateAdmin, function(req, res) {
+//router.post('/', passport.authenticate('bearer_admin', { session: false }), function(req, res) {
 //router.post('/', function(req, res) {
 			
 	var attributes = req.body.data;
@@ -94,8 +116,8 @@ router.post('/', passport.authenticate('bearer', { session: false }), function(r
 	});	
 });
 
-
-router.post('/:id', passport.authenticate('bearer', { session: false }), function(req, res) {
+router.post('/:id', authenticateAdmin, function(req, res) {
+//router.post('/:id', passport.authenticate('bearer_admin', { session: false }), function(req, res) {
 //router.post('/:id', function(req, res) {
 		
 	var attributes = req.body.data;
@@ -127,7 +149,7 @@ router.post('/:id', passport.authenticate('bearer', { session: false }), functio
 	
 });
 
-router.delete('/:id', passport.authenticate('bearer', { session: false }), function(req, res) {	
+router.delete('/:id', passport.authenticate('bearer_admin', { session: false }), function(req, res) {	
 //router.delete('/:id',  function(req, res) {
 		
 	clearOldtestData(req.params.id, function(err, testToDelete){
@@ -327,29 +349,6 @@ function createStatistics(savedTest, statQuestions){
 		}
 	});
 };	
-/*
-function addQuestionIdToTest(testId, questionId, index, callback){
-	Test.findById(testId, function (err, oneTest) {								
-		if(!oneTest) {
-			if (typeof(callback) == "function"){
-				return callback('test not found by id:' + testId);	
-			}		
-		} else if (!err) {
-			//oneTest.questions.push(questionId);
-			console.log("oneTest.questions --------------0   ",oneTest.questions);
-			console.log("oneTest.questions -----------index   ",index);
-			oneTest.questions[index] = questionId;	
-			console.log("oneTest.questions --------------1   ",oneTest.questions);
-			oneTest.save(function (err,savedTest) {
-				console.log("oneTest.savedTest --------------1   ",savedTest);
-				callback(err);
-			});										
-		} else {
-			log.error('Internal error(%d): %s',res.statusCode,err.message);
-			callback(err);
-		}
-	});	
-};*/
 
 function addQuestionIdToTest(testId, questionIds, callback){
 	Test.findById(testId, function (err, oneTest) {								
@@ -576,7 +575,6 @@ function verifyQuestion(question){
 			});	
 		}
 		// check if correct answers chosen	
-		//console.log(question);
 		if(!verifyAnswer(question)){
 			verified = false;	
 		}	
@@ -612,29 +610,40 @@ function verifyAnswer (question){
 	return answersChosen;
 };
 
-
-
-
-
-/*
-function deleteImage(imageToDel, callback){
-	fs.unlink(imageToDel.url, (err) => {
-		if (err) throw err;
-		//console.log('successfully deleted  --- ', imageToDel.url);
-	});
-	imageToDel.remove({},function(err) {
-		if(err){		
-			log.error('Internal error(%d): %s',res.statusCode,err.message);
-			callback(err);
+function authenticateAdmin(req, res, next){
+	passport.authenticate('bearer_admin', { session: false }, function(err, user, info) {	
+		if (err) { 
+			res.set('WWW-Authenticate', err);
+			res.statusCode = 401;
+			res.json(err);	
+		} else if (!user) {
+			var error = getErrObjectFromInfo(info);
+			res.set('WWW-Authenticate', info);
+			res.statusCode = 401;
+			res.json(error);	
 		} else {
-			if (typeof(callback) == "function"){
-				//somemethodtodeleteimgfromfolder();
-				//console.log("somemethodtodeleteimgfromfolder");
-				callback(err);
-			}
-		}	
-	});	
+			next();	
+		}
+	})(req, res);	
 };
-*/
+
+function getErrObjectFromInfo(info){
+	if(info){
+		var data = info.split(',');
+		var error = {};
+		
+		data.forEach(function(item){	
+				if(item.indexOf("error_description") > -1){		
+				error.error_description = item.substring(item.indexOf('"')+1,item.lastIndexOf('"'));	
+			} else if(item.indexOf("error") > -1){
+				error.error = item.substring(item.indexOf('"')+1,item.lastIndexOf('"'));	
+			}
+		});	
+		return error;
+	} else {
+		return "";	
+	}
+};
+
 
 module.exports = router;

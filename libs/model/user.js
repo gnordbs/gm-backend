@@ -14,6 +14,11 @@ var mongoose = require('mongoose'),
 			required: true,
 			//select: false
 		},
+		firstName: {type: String},
+		lastName: {type: String},
+		phone: {type: String},
+		email: {type: String},
+		role: {type: String},
 		salt: {
 			type: String,
 			required: true,
@@ -26,7 +31,7 @@ var mongoose = require('mongoose'),
 	});
 
 User.methods.encryptPassword = function(password) {
-	console.log("encryptPassword called pass :"  + password);
+	//console.log("encryptPassword called pass :"  + password);
 	return crypto.createHmac('sha1', this.salt).update(password).digest('hex');
     //more secure - return crypto.pbkdf2Sync(password, this.salt, 10000, 512).toString('hex');
 };
@@ -49,7 +54,7 @@ User.virtual('password')
 User.methods.checkPassword = function(password) {
 	return this.encryptPassword(password) === this.hashedPassword;
 };
-
+/*
 User.methods.deleteRouteId = function(routeId) {
 	var index = this.driveRoute.indexOf(routeId);
 	if (index >= 0) {
@@ -63,7 +68,7 @@ User.methods.deleteRouteId = function(routeId) {
 				else return true;
 			})
 	} else return false;
-};
+};*/
 
 User.methods.toJsonDeletePass = function() {
 	var user = this.toObject();
