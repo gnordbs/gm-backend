@@ -11,7 +11,7 @@ var mongoose = require('mongoose'),
 		"phone": { type: String },
 		"email": { type: String },
 		"rating": { type: String },
-		"answers": { type: Array },
+		"answers": { type: Array }
 	});
 
 

@@ -201,10 +201,16 @@ function saveTestToDb(newTest, rawQuestions, cback){
 						
 						var newQuestion = new Question(finData);
 						newQuestion.save(function (err,savedQuestion){
-							statQuestions.push({
+						
+							statQuestions[index] = {
+								"id": savedQuestion.id,
+								"name": index + 1,
+								"shortId": 'q_'+index
+							};	
+							/*statQuestions.push({
 								"id": 'q_'+index,
 								"name": index + 1	
-							});		
+							});	*/
 							postQuestions[index] = savedQuestion.id;
 							callback(err);
 							/*

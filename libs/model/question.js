@@ -10,6 +10,7 @@ var mongoose = require('mongoose'),
 		"answersAreImages": { type: Boolean },
 		"imageIncluded": { type: Boolean },
 		"textAnswer": { type: String },
+		"unconfirmed": { type: Boolean },
 		"allAnswers": {  type: Array }		
 	});
 

@@ -149,65 +149,61 @@ router.post('/', authenticateUser, function(req, res) {
 								res.statusCode = 404;
 								res.end();
 							} else if (!err) {
-								
+									
+								var isCorrect = true;
 								switch (savedQuestion.type){	
 									case "text":
 									
-									var isCorrect = false;
-									if(savedQuestion.textAnswer === item.textAnswer){
-										isCorrect = true;
-										ratio++;
-									}
-									newUserAnswer.answers.push({
-										"qId":'q_'+answerIndex,
-										"isCorrect": isCorrect
-									});
-									callback();
+										var isCorrect = false;
+										if(savedQuestion.textAnswer === item.textAnswer){
+											isCorrect = true;
+											ratio++;
+										}
+										
 									break;
 									case "radio":
 									
 									var isCorrect = true;
-									savedQuestion.allAnswers.forEach(function(savedAnswer, index){
-										if(item.allAnswers[index]){
-											if(savedAnswer.isDefault !== item.allAnswers[index].isDefault){
+										savedQuestion.allAnswers.forEach(function(savedAnswer, index){
+											if(item.allAnswers[index]){
+												if(savedAnswer.isDefault !== item.allAnswers[index].isDefault){
+													isCorrect = false;	
+												}	
+											} else {
 												isCorrect = false;	
 											}	
-										} else {
-											isCorrect = false;	
-										}	
-									});
-									
-									if(isCorrect) ratio++;
-									
-									newUserAnswer.answers.push({
-										"qId": 'q_'+answerIndex,
-										"isCorrect": isCorrect
-									});
-									callback();
+										});
+										
+										if(isCorrect) ratio++;
+										
 									break;
 									case "checkbox":
 									
 									var isCorrect = true;
-									savedQuestion.allAnswers.forEach(function(savedAnswer, index){
-										if(item.allAnswers[index]){
-											if(savedAnswer.isTrue !== item.allAnswers[index].isTrue){
+										savedQuestion.allAnswers.forEach(function(savedAnswer, index){
+											if(item.allAnswers[index]){
+												if(savedAnswer.isTrue !== item.allAnswers[index].isTrue){
+													isCorrect = false;	
+												}	
+											} else {
 												isCorrect = false;	
-											}	
-										} else {
-											isCorrect = false;	
-										}
-									});
-									
-									if(isCorrect) ratio++;
-									
-									newUserAnswer.answers.push({
-										"qId": 'q_'+answerIndex,
-										"isCorrect": isCorrect
-									});
-									callback();
+											}
+										});
+										
+										if(isCorrect) ratio++;
 									break;
 								}
 								
+								newUserAnswer.answers.push({
+									"qId": savedQuestion.id,
+									"isCorrect": isCorrect,
+									"shortId": 'q_'+answerIndex
+								});
+								/*newUserAnswer.answers.push({
+									"qId":'q_'+answerIndex,
+									"isCorrect": isCorrect
+								});*/
+								callback();
 								
 							} else {
 								res.statusCode = 500;
@@ -324,7 +320,12 @@ function getAnsweredTestForUser(oneTest, userAnswer, cback){
 		async.map(oneTest.questions,
 			function(item, callback){	
 				getQuestionWithAnswersById(item, function(err, oneQuestion){
-					if(!err && oneQuestion){
+					if(!err && oneQuestion){				
+						userAnswer.answers.forEach(function(userAnswer){
+							if(userAnswer.qId === item){
+								oneQuestion.unconfirmed = !userAnswer.isCorrect;
+							}	
+						});
 						callback(null, oneQuestion);	
 					} else {
 						callback(err);	
@@ -337,7 +338,10 @@ function getAnsweredTestForUser(oneTest, userAnswer, cback){
 				}
 				if(results){
 					oneTest.questions = results;
-					cback(null, outData.testToJson(oneTest));
+					var result = outData.testToJson(oneTest);
+					result.isAnswered = true;	
+					
+					cback(null, result);
 				}
 			}
 		);
@@ -389,22 +393,6 @@ function getQuestionWithAnswersById(questionId, callback){
 		});
 	}
 }
-
-function getQuestionWithAnswersById(questionId, callback){
-	if (typeof(callback) == "function"){
-			
-		Question.findById(questionId, function (err, oneQuestion) {			
-			if(!oneQuestion) {
-				callback('Question not found: ', questionId);
-			} else if (!err) {
-				callback(err, oneQuestion);
-			} else {
-				callback(err);
-			}
-		});
-	}
-}
-
 
 function testTimingCheck(oneTest){
 	var avText = "";
