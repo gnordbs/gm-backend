@@ -3,6 +3,7 @@ var passport = require('passport');
 var router = express.Router();
 
 var libs = process.cwd() + '/libs/';
+var log = require(libs + 'log')(module);
 
 var db = require(libs + 'db/mongoose');
 var User = require(libs + 'model/user');
@@ -149,31 +150,50 @@ router.delete('/:id', passport.authenticate('bearer', { session: false }), funct
 	
 		
 router.post('/', function(req, res) {	
-	console.log('username :  ' + req.body.username);	
-	console.log('password :   ' + req.body.password);		
+	//console.log('username :  ' + req.body.username);	
+	//console.log('password :   ' + req.body.password);		
 
 	var user = new User({
 		username : req.body.username,
-		password: req.body.password
+		password: req.body.password,
+		firstName:  req.body.firstName,
+		lastName:  req.body.lastName,
+		phone:  req.body.phone,
+		email:  req.body.email,
+		role: 'user'
 	});
-
-	user.save(function (err) {
-		if (!err) {
-			console.info("New user created with id: %s", user.id);
-
-			res.statusCode = 200;
+	
+	
+	User.findOne({username : req.body.username}, function(err, results) {
+        if(err) {
+            res.statusCode = 500;
 			res.end();
-		} else {		
-			if(err.name === 'ValidationError') {
-				res.statusCode = 400;
-				res.end();
-			} else {
-				res.statusCode = 500;
-				res.end();
-			}
-			log.error('Internal error(%d): %s', res.statusCode, err.message);
-		}
-	});
+        } else if(results) {
+		
+			res.statusCode = 409;
+			res.json({error: "username not unique"});		
+			
+        } else {
+            user.save(function (err, Usr) {
+				if (!err) {
+					console.info("New user created with id: %s", user.id);
+					res.statusCode = 200;
+					res.end();
+				} else {		
+					if(err.name === 'ValidationError') {
+						res.statusCode = 400;
+						res.end();
+					} else {
+						res.statusCode = 500;
+						res.end();
+					}
+					log.error('Internal error(%d): %s', res.statusCode, err.message);
+				}
+			});
+        }
+    });
+	
+	
 
 });
 

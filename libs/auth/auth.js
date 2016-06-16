@@ -14,15 +14,13 @@ var RefreshToken = require(libs + 'model/refreshToken');
 
 passport.use(new BasicStrategy(
     function(username, password, done) {
-		console.log("BasicStrategy called");
+		//console.log("BasicStrategy called");
         Client.findOne({ clientId: username }, function(err, client) {
             if (err) { 
-				//console.log("Client.findOne err");
             	return done(err); 
             }
 
             if (!client) { 
-				//console.log(" !client.findOne err");
             	return done(null, false); 
             }
             if (client.clientSecret !== password) { 
@@ -35,10 +33,8 @@ passport.use(new BasicStrategy(
 
 passport.use(new ClientPasswordStrategy(
     function(clientId, clientSecret, done) {
-		console.log("ClientPasswordStrategy called");
+		//console.log("ClientPasswordStrategy called");
         Client.findOne({ clientId: clientId }, function(err, client) {
-			//console.log("ClientPasswordStrategy called ----1 ", client);
-			//console.log("ClientPasswordStrategy called err-1 ", err);
             if (err) { 
             	return done(err); 
             }
@@ -58,7 +54,7 @@ passport.use(new ClientPasswordStrategy(
 
 passport.use(new BearerStrategy(
     function(accessToken, done) {
-		console.log("BearerStrategy called");
+		//console.log("BearerStrategy called");
         AccessToken.findOne({ token: accessToken }, function(err, token) {
             if (err) { 
             	return done(err); 
@@ -83,6 +79,43 @@ passport.use(new BearerStrategy(
                 	return done(null, false, { message: 'Unknown user' }); 
                 }
 
+                var info = { scope: '*' };
+                done(null, user, info);
+            });
+        });
+    }
+));
+
+passport.use('bearer_admin', new BearerStrategy(
+    function(accessToken, done) {
+		//console.log("BearerStrategy_admin called");
+        AccessToken.findOne({ token: accessToken }, function(err, token) {
+            if (err) { 
+            	return done(err); 
+            }
+            if (!token) { 
+            	return done(null, false); 
+            }
+            if( Math.round((Date.now()-token.created)/1000) > config.get('security:tokenLife') ) {
+                AccessToken.remove({ token: accessToken }, function (err) {
+                    if (err) {
+                    	return done(err);
+                    } 
+                });
+                return done(null, false, { message: 'Token expired' });
+            }
+            User.findById(token.userId, function(err, user) {
+                if (err) { 
+                	return done(err); 
+                }
+
+                if (!user) { 
+                	return done(null, false, { message: 'Unknown user' }); 
+                }
+				
+				if (user.role !== 'admin'){
+					return done(null, false, { message: 'Not admin user' });
+				}
                 var info = { scope: '*' };
                 done(null, user, info);
             });

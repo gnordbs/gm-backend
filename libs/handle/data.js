@@ -53,7 +53,7 @@ exports.userStatsToJson = function (list) {
 		};
 		
 		item.answers.forEach(function(answer, i, arr){
-			newitem[answer.qId] = answer.isCorrect;
+			newitem[answer.shortId] = answer.isCorrect;
 		});
 		
 		return newitem;	

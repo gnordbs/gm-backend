@@ -25,7 +25,7 @@ var errFn = function (cb, err) {
 };
 
 // Destroys any old tokens and generates a new access and refresh token
-var generateTokens = function (data, done) {
+var generateTokens = function (data, userInfo, done) {
 	//console.log('generateTokens----------');
 	// curries in `done` callback so we don't need to pass it
     var errorHandler = errFn.bind(undefined, done), 
@@ -34,36 +34,50 @@ var generateTokens = function (data, done) {
 	    token,
 	    tokenValue;
 
-    RefreshToken.remove(data, errorHandler);
-    AccessToken.remove(data, errorHandler);
-
-    tokenValue = crypto.randomBytes(32).toString('hex');
-    refreshTokenValue = crypto.randomBytes(32).toString('hex');
-
-    data.token = tokenValue;
-    token = new AccessToken(data);
-
-    data.token = refreshTokenValue;
-    refreshToken = new RefreshToken(data);
-
-    refreshToken.save(errorHandler);
-
-    token.save(function (err) {
-		//console.log('generateToken main ---------- err= ',err);
-    	if (err) {
+	tokenValue = crypto.randomBytes(32).toString('hex');
+    refreshTokenValue = crypto.randomBytes(32).toString('hex');	
+	
+    RefreshToken.remove(data, function(error){
+		if (error) {
+			log.error(error);
+    		return done(error); 
+    	} else {
+			data.token = refreshTokenValue;
+			refreshToken = new RefreshToken(data);
 			
-			log.error(err);
-    		return done(err); 
-    	}
-    	done(null, tokenValue, refreshTokenValue, { userId: data.userId,
-    		'expires_in': config.get('security:tokenLife') 
-    	});
-    });
+			refreshToken.save(errorHandler);		
+		}
+	});
+		
+    AccessToken.remove(data, function(error){
+		if (error) {
+			log.error(error);
+    		return done(error); 
+    	} else {
+			data.token = tokenValue;
+			token = new AccessToken(data);	
+			
+			token.save(function (err, newToken) {			
+				if (err) {
+					log.error(err);
+					return done(err); 
+				}
+				done(null, tokenValue, refreshTokenValue, { userId: data.userId, userData: userInfo,
+					'expires_in': config.get('security:tokenLife') 
+				});
+			});
+		}
+	});
+    
+
+    
+
+    
 };
 
 // Exchange username & password for access token.
 aserver.exchange(oauth2orize.exchange.password(function(client, username, password, scope, done) {
-	console.log("---------------exchange.password called");
+	//console.log("---------------exchange.password called");
 	User.findOne({ username: username }, function(err, user) {
 		
 		if (err) { 
@@ -74,22 +88,25 @@ aserver.exchange(oauth2orize.exchange.password(function(client, username, passwo
 			return done(null, false);
 		}
 
+		var userInfo = {
+			userRole: user.role || 'user',
+			userLogin: user.username || 'user',
+		};
+
 		var model = { 
 			userId: user.userId, 
 			clientId: client.clientId 
 		};
 
-		generateTokens(model, done);
+		generateTokens(model, userInfo, done);
 	});
 
 }));
 
 // Exchange refreshToken for access token.
 aserver.exchange(oauth2orize.exchange.refreshToken(function(client, refreshToken, scope, done) {
-	console.log('-----------------exchange. refreshToken---');
+	//console.log('-----------------exchange. refreshToken---');
 	RefreshToken.findOne({ token: refreshToken, clientId: client.clientId }, function(err, token) {
-		//	console.log('Exchange refreshToken---1', token);
-		//	console.log('Exchange refreshToken---2', err);
 		if (err) { 
 			return done(err); 
 		}
@@ -102,13 +119,17 @@ aserver.exchange(oauth2orize.exchange.refreshToken(function(client, refreshToken
 			if (err) { return done(err); }
 			if (!user) { return done(null, false); }
 			
+			var userInfo = {
+				userRole: user.role || 'user',
+				userLogin: user.username || 'user',
+			};
 			
 			var model = { 
 				userId: user.userId, 
 				clientId: client.clientId 
 			};
 
-			generateTokens(model, done);
+			generateTokens(model, userInfo, done);
 		});
 	});
 }));
@@ -125,15 +146,3 @@ exports.token = [
 	aserver.token(),
 	aserver.errorHandler()
 ];
-
-/*
-exports.token = [function(req, res, next) {	
-	console.log('/token      ' + req.body.client_id);
-	console.log(util.inspect(req.body, {showHidden: false, depth: null}));
-	next()
-	},
-	passport.authenticate(['basic', 'oauth2-client-password'], { session: false }),
-	aserver.token(),
-	aserver.errorHandler()
-];
-*/
