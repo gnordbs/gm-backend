@@ -15,24 +15,6 @@ var TestImage = require(libs + 'model/image');
 var outData = require(libs + 'handle/data');
 var util = require('util');
 
-/*
-router.get('/',  passport.authenticate('bearer_admin', { session: false }), function(req, res) {
-//router.get('/',  function(req, res) {
-	
-	Test.find({}, function (err, allTests) {
-			
-		if(!allTests) {
-			res.statusCode = 404;
-			res.end();
-		} else if (!err) {
-			return res.json(outData.testlistToJson(allTests));
-		} else {
-			res.statusCode = 500;
-			res.end();
-			log.error('Internal error(%d): %s',res.statusCode,err.message);
-		}
-	});
-});*/
 
 router.get('/', authenticateAdmin,
 	function(req, res) {
@@ -221,7 +203,7 @@ function saveTestToDb(newTest, rawQuestions, cback){
 						newQuestion.save(function (err,savedQuestion){
 							statQuestions.push({
 								"id": 'q_'+index,
-								"name": index	
+								"name": index + 1	
 							});		
 							postQuestions[index] = savedQuestion.id;
 							callback(err);

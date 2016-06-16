@@ -42,52 +42,58 @@ router.get('/', authenticateUser,  function(req, res) {
 router.get('/:id', authenticateUser, function(req, res) {
 //router.get('/:id', passport.authenticate('bearer', { session: false }), function(req, res) {
 	//console.log('---------------------------tests get id called');
+	var tHead = req.get("Authorization");
+	if(tHead.indexOf("Bearer") === 0){
+		token = tHead.slice(7);	
+	}
+	
 	Test.findById(req.params.id, function (err, oneTest) {
-		//console.log("oneTest..................qqq",oneTest);
 		
 		if(!oneTest) {
 			res.statusCode = 404;
 			res.end();
 		} else if (!err) {		
-			var availavilityText = testTimingCheck(oneTest);
-			if(availavilityText !== ""){
-				//console.log("oneTest...not aval...............",availavilityText);
+		
+			getUserData(token, function(err, userData){
+				if(!userData) {
+					res.statusCode = 404;
+					res.end();
+				} else if (!err) {	
 				
-				oneTest.isAvailable = false;
-				oneTest.availabilityText = availavilityText;
-				oneTest.questions = [];
-				return res.json(outData.testToJson(oneTest));
-			} else {		
-				//console.log("oneTest..................1",oneTest);
-				
-				async.map(oneTest.questions,
-					function(item, callback){	
-						//console.log("get test id--------------*", item);
-						getQuestionById(item, function(err, oneQuestion){
-							if(!err && oneQuestion){
-								callback(null, oneQuestion);	
-							} else {
-								callback(err);	
-							}
-						});					
-					},
-					function(err, results){
-						//console.log("get test id--------------f", err, results);
-						if(err) {
+					isTestAlreadySubmited(oneTest.id, userData.id, function(err, userAnswer){
+						if(err){
 							res.statusCode = 500;
 							res.end();
-							log.error('Internal error(%d): %s',res.statusCode,err.message);	
-						}
-						if(results){
-							oneTest.questions = results;
-							//console.log("get test id----oneTest.quesions", oneTest.quesions);
+							log.error('Internal error(%d): %s',res.statusCode,err.message);		
+						} else if(userAnswer) {
 							
-							//console.log("oneTest..................",oneTest);
-							return res.json(outData.testToJson(oneTest));	
-						}
-					}
-				);
-			}
+							getAnsweredTestForUser(oneTest, userAnswer, function(err, data){
+								// send answered test to user
+								if(err){
+									res.statusCode = 500;
+									res.end();	
+								} else if(data){
+									return res.json(data);	
+								}								
+							});
+						} else {
+							
+							getNewTestForUser(oneTest, function(err, result){
+								if(err){
+									res.statusCode = 500;
+									res.end();	
+								} else if(result){
+									return res.json(result);	
+								}
+							});
+						}	
+					});	
+				} else {
+					res.statusCode = 500;
+					res.end();
+					log.error('Internal error(%d): %s',res.statusCode,err.message);	
+				}
+			});
 		} else {
 			res.statusCode = 500;
 			res.end();
@@ -122,7 +128,8 @@ router.post('/', authenticateUser, function(req, res) {
 			verifyPostedTest(attributes, function(status){
 				if(status === 'ok'){		
 					var newUserAnswer = new UserAnswer({ 
-						"testId": attributes.id,		
+						"testId": attributes.id,
+						"userId": userData.id,
 						"name": userData.firstName,
 						"surname": userData.lastName,
 						"phone": userData.phone,
@@ -248,26 +255,111 @@ router.post('/', authenticateUser, function(req, res) {
 });
 
 function getUserData(accessToken, callback) {
-		console.log("BearerStrategy_admin called");
-        AccessToken.findOne({ token: accessToken }, function(err, token) {
-            if (err) { 
-            	callback(err); 
-            } else if (!token) { 
-            	callback("token not found", null); 
-            }
+	AccessToken.findOne({ token: accessToken }, function(err, token) {
+		if (err) { 
+			callback(err); 
+		} else if (!token) { 
+			callback("token not found", null); 
+		}
 
-            User.findById(token.userId, function(err, user) {
-                if (err) { 
-                	callback(err); 
-                } else if (!user) { 
-                	callback("user not found", null); 
-                }
+		User.findById(token.userId, function(err, user) {
+			if (err) { 
+				callback(err); 
+			} else if (!user) { 
+				callback("user not found", null); 
+			}
 
-                callback(null, user);
-            });
-        });
-    }
+			callback(null, user);
+		});
+	});
+};
 
+function getNewTestForUser(oneTest, cback){
+		
+	var availavilityText = testTimingCheck(oneTest);
+	if(availavilityText !== ""){
+		
+		oneTest.isAvailable = false;
+		oneTest.availabilityText = availavilityText;
+		oneTest.questions = [];
+		
+		cback(null, outData.testToJson(oneTest));
+	} else {		
+		
+		async.map(oneTest.questions,
+			function(item, callback){	
+				getQuestionById(item, function(err, oneQuestion){
+					if(!err && oneQuestion){
+						callback(null, oneQuestion);	
+					} else {
+						callback(err);	
+					}
+				});					
+			},
+			function(err, results){
+				if(err) {
+					cback(err);
+				}
+				if(results){
+					oneTest.questions = results;
+					cback(null, outData.testToJson(oneTest));
+				}
+			}
+		);
+	}	
+};
+
+function getAnsweredTestForUser(oneTest, userAnswer, cback){
+		
+	var availavilityText = testTimingCheck(oneTest);
+	if(availavilityText !== ""){
+		
+		oneTest.isAvailable = false;
+		oneTest.availabilityText = availavilityText;
+		oneTest.questions = [];
+		
+		cback(null, outData.testToJson(oneTest));
+	} else {		
+		
+		async.map(oneTest.questions,
+			function(item, callback){	
+				getQuestionWithAnswersById(item, function(err, oneQuestion){
+					if(!err && oneQuestion){
+						callback(null, oneQuestion);	
+					} else {
+						callback(err);	
+					}
+				});					
+			},
+			function(err, results){
+				if(err) {
+					cback(err);
+				}
+				if(results){
+					oneTest.questions = results;
+					cback(null, outData.testToJson(oneTest));
+				}
+			}
+		);
+	}	
+};
+
+function isTestAlreadySubmited(testId, userId, callback) {
+	console.log("isTestAlreadySubmited");
+	UserAnswer.findOne({'testId': testId, 'userId': userId}, function(err, oneUserAnswer) {
+		if (err) { 
+			console.log("isTestAlreadySubmited error - ",err);
+			callback(err, null); 
+		} else if (oneUserAnswer) { 
+			console.log("isTestAlreadySubmited allready - ",oneUserAnswer);
+			callback(null, oneUserAnswer); 
+		} else{
+			console.log("isTestAlreadySubmited clear - ");
+			callback(null, null);	
+		}
+	});
+};
+	
 function getQuestionById(questionId, callback){
 	if (typeof(callback) == "function"){
 			
@@ -282,6 +374,37 @@ function getQuestionById(questionId, callback){
 		});
 	}
 }
+
+function getQuestionWithAnswersById(questionId, callback){
+	if (typeof(callback) == "function"){
+			
+		Question.findById(questionId, function (err, oneQuestion) {			
+			if(!oneQuestion) {
+				callback('Question not found: ', questionId);
+			} else if (!err) {
+				callback(err, oneQuestion);
+			} else {
+				callback(err);
+			}
+		});
+	}
+}
+
+function getQuestionWithAnswersById(questionId, callback){
+	if (typeof(callback) == "function"){
+			
+		Question.findById(questionId, function (err, oneQuestion) {			
+			if(!oneQuestion) {
+				callback('Question not found: ', questionId);
+			} else if (!err) {
+				callback(err, oneQuestion);
+			} else {
+				callback(err);
+			}
+		});
+	}
+}
+
 
 function testTimingCheck(oneTest){
 	var avText = "";

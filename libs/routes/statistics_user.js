@@ -19,7 +19,7 @@ router.get('/',  function(req, res) {
 });
 
 
-router.get('/:id', authenticateAdmin, function(req, res) {
+router.get('/:id', authenticateUser, function(req, res) {
 //router.get('/:id', passport.authenticate('bearer', { session: false }), function(req, res) {
 //router.get('/:id',  function(req, res) {
 	
@@ -63,13 +63,13 @@ router.get('/:id', authenticateAdmin, function(req, res) {
 	});
 });
 
-function authenticateAdmin(req, res, next){
-	passport.authenticate('bearer_admin', { session: false }, function(err, user, info) {	
+function authenticateUser(req, res, next){
+	passport.authenticate('bearer', { session: false }, function(err, user, info) {	
 		if (err) { 
 			res.set('WWW-Authenticate', err);
 			res.statusCode = 401;
 			res.json(err);	
-		} else if (!user) {
+		} else if (!user) {	
 			var error = getErrObjectFromInfo(info);
 			res.set('WWW-Authenticate', info);
 			res.statusCode = 401;
@@ -97,7 +97,6 @@ function getErrObjectFromInfo(info){
 		return "";	
 	}
 };
-
 
 
 

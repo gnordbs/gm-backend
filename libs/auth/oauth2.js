@@ -25,7 +25,7 @@ var errFn = function (cb, err) {
 };
 
 // Destroys any old tokens and generates a new access and refresh token
-var generateTokens = function (data, role, done) {
+var generateTokens = function (data, userInfo, done) {
 	//console.log('generateTokens----------');
 	// curries in `done` callback so we don't need to pass it
     var errorHandler = errFn.bind(undefined, done), 
@@ -62,7 +62,7 @@ var generateTokens = function (data, role, done) {
 					log.error(err);
 					return done(err); 
 				}
-				done(null, tokenValue, refreshTokenValue, { userId: data.userId, userRole: role,
+				done(null, tokenValue, refreshTokenValue, { userId: data.userId, userData: userInfo,
 					'expires_in': config.get('security:tokenLife') 
 				});
 			});
@@ -88,13 +88,17 @@ aserver.exchange(oauth2orize.exchange.password(function(client, username, passwo
 			return done(null, false);
 		}
 
-		var userRole = user.role || 'user';
+		var userInfo = {
+			userRole: user.role || 'user',
+			userLogin: user.username || 'user',
+		};
+
 		var model = { 
 			userId: user.userId, 
 			clientId: client.clientId 
 		};
 
-		generateTokens(model, userRole, done);
+		generateTokens(model, userInfo, done);
 	});
 
 }));
@@ -115,13 +119,17 @@ aserver.exchange(oauth2orize.exchange.refreshToken(function(client, refreshToken
 			if (err) { return done(err); }
 			if (!user) { return done(null, false); }
 			
-			var userRole = user.role || 'user';
+			var userInfo = {
+				userRole: user.role || 'user',
+				userLogin: user.username || 'user',
+			};
+			
 			var model = { 
 				userId: user.userId, 
 				clientId: client.clientId 
 			};
 
-			generateTokens(model, userRole, done);
+			generateTokens(model, userInfo, done);
 		});
 	});
 }));

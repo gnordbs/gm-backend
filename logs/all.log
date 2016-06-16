@@ -995,3 +995,24 @@
 {"level":"info","message":"Connected to DB!","timestamp":"2016-06-16T13:44:50.909Z"}
 {"level":"info","message":"Express server listening on port 1337","timestamp":"2016-06-16T13:49:27.936Z"}
 {"level":"info","message":"Connected to DB!","timestamp":"2016-06-16T13:49:27.959Z"}
+{"level":"info","message":"Express server listening on port 1337","timestamp":"2016-06-16T13:53:19.292Z"}
+{"level":"info","message":"Connected to DB!","timestamp":"2016-06-16T13:53:19.317Z"}
+{"level":"info","message":"Express server listening on port 1337","timestamp":"2016-06-16T14:22:54.918Z"}
+{"level":"info","message":"Connected to DB!","timestamp":"2016-06-16T14:22:54.941Z"}
+{"level":"info","message":"Express server listening on port 1337","timestamp":"2016-06-16T14:53:23.906Z"}
+{"level":"info","message":"Connected to DB!","timestamp":"2016-06-16T14:53:23.929Z"}
+{"level":"info","message":"Express server listening on port 1337","timestamp":"2016-06-16T15:11:25.260Z"}
+{"level":"info","message":"Connected to DB!","timestamp":"2016-06-16T15:11:25.293Z"}
+{"level":"error","message":"Internal error(500): E11000 duplicate key error collection: gmTests.users index: username_1 dup key: { : \"ddd\" }","timestamp":"2016-06-16T15:17:31.032Z"}
+{"level":"info","message":"Express server listening on port 1337","timestamp":"2016-06-16T15:48:18.530Z"}
+{"level":"info","message":"Connected to DB!","timestamp":"2016-06-16T15:48:18.553Z"}
+{"level":"info","message":"Express server listening on port 1337","timestamp":"2016-06-16T15:48:47.078Z"}
+{"level":"info","message":"Connected to DB!","timestamp":"2016-06-16T15:48:47.101Z"}
+{"level":"info","message":"Express server listening on port 1337","timestamp":"2016-06-16T15:49:39.095Z"}
+{"level":"info","message":"Connected to DB!","timestamp":"2016-06-16T15:49:39.119Z"}
+{"level":"info","message":"Express server listening on port 1337","timestamp":"2016-06-16T18:11:56.334Z"}
+{"level":"info","message":"Connected to DB!","timestamp":"2016-06-16T18:11:56.360Z"}
+{"level":"info","message":"Express server listening on port 1337","timestamp":"2016-06-16T18:12:36.294Z"}
+{"level":"info","message":"Connected to DB!","timestamp":"2016-06-16T18:12:36.326Z"}
+{"level":"info","message":"Express server listening on port 1337","timestamp":"2016-06-16T18:14:21.844Z"}
+{"level":"info","message":"Connected to DB!","timestamp":"2016-06-16T18:14:21.889Z"}

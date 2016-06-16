@@ -4,7 +4,8 @@ var mongoose = require('mongoose'),
 	Schema = mongoose.Schema,
 
 	UserAnswer = new Schema({	
-		"testId": { type: String },		
+		"testId": { type: String },
+		"userId": { type: String },		
 		"name": { type: String },
 		"surname": { type: String },
 		"phone": { type: String },
