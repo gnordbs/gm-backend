@@ -349,16 +349,12 @@ function getAnsweredTestForUser(oneTest, userAnswer, cback){
 };
 
 function isTestAlreadySubmited(testId, userId, callback) {
-	console.log("isTestAlreadySubmited");
 	UserAnswer.findOne({'testId': testId, 'userId': userId}, function(err, oneUserAnswer) {
 		if (err) { 
-			console.log("isTestAlreadySubmited error - ",err);
 			callback(err, null); 
 		} else if (oneUserAnswer) { 
-			console.log("isTestAlreadySubmited allready - ",oneUserAnswer);
 			callback(null, oneUserAnswer); 
 		} else{
-			console.log("isTestAlreadySubmited clear - ");
 			callback(null, null);	
 		}
 	});
@@ -397,15 +393,17 @@ function getQuestionWithAnswersById(questionId, callback){
 function testTimingCheck(oneTest){
 	var avText = "";
 	var startDate =  oneTest.startDate || '';
+	startDate.setHours(0, 0, 0, 0);
 	var endDate =  oneTest.endDate || '';
+	endDate.setHours(0, 0, 0, 0);
 	
 	var currentDate = new Date();
-	
+	currentDate.setHours(0, 0, 0, 0);	
 	if(currentDate < startDate){
 		var startDay = startDate.toDateString();
 		avText = "This will be available on " + startDay;
 		return avText;	
-	} else if (currentDate < endDate) {
+	} else if (currentDate <= endDate) {
 		return avText;	
 	} else {
 		avText = "This test is already closed";

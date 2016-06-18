@@ -1097,3 +1097,17 @@
 {"level":"error","message":"Not supported file type: file is too big","timestamp":"2016-06-18T07:15:22.095Z"}
 {"level":"error","message":"Not supported file type: file is too big","timestamp":"2016-06-18T07:17:23.195Z"}
 {"level":"error","message":"Not supported file type: file is too big","timestamp":"2016-06-18T07:26:47.875Z"}
+{"level":"info","message":"Express server listening on port 1337","timestamp":"2016-06-18T07:35:55.501Z"}
+{"level":"info","message":"Connected to DB!","timestamp":"2016-06-18T07:35:55.527Z"}
+{"level":"info","message":"Express server listening on port 1337","timestamp":"2016-06-18T07:48:50.784Z"}
+{"level":"info","message":"Connected to DB!","timestamp":"2016-06-18T07:48:50.809Z"}
+{"level":"info","message":"Express server listening on port 1337","timestamp":"2016-06-18T08:08:14.763Z"}
+{"level":"info","message":"Connected to DB!","timestamp":"2016-06-18T08:08:14.788Z"}
+{"level":"info","message":"Express server listening on port 1337","timestamp":"2016-06-18T08:21:03.340Z"}
+{"level":"info","message":"Connected to DB!","timestamp":"2016-06-18T08:21:03.367Z"}
+{"level":"info","message":"Express server listening on port 1337","timestamp":"2016-06-18T08:22:01.040Z"}
+{"level":"info","message":"Connected to DB!","timestamp":"2016-06-18T08:22:01.063Z"}
+{"level":"info","message":"Express server listening on port 1337","timestamp":"2016-06-18T08:22:43.998Z"}
+{"level":"info","message":"Connected to DB!","timestamp":"2016-06-18T08:22:44.023Z"}
+{"level":"info","message":"Express server listening on port 1337","timestamp":"2016-06-18T08:48:12.742Z"}
+{"level":"info","message":"Connected to DB!","timestamp":"2016-06-18T08:48:12.767Z"}
