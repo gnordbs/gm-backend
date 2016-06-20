@@ -27,7 +27,6 @@ var errFn = function (cb, err) {
 // Destroys any old tokens and generates a new access and refresh token
 var generateTokens = function (data, userInfo, done) {
 	//console.log('generateTokens----------');
-	// curries in `done` callback so we don't need to pass it
     var errorHandler = errFn.bind(undefined, done), 
 	    refreshToken,
 	    refreshTokenValue,
